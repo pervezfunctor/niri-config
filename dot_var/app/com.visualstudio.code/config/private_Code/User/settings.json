@@ -1,0 +1,25 @@
+{
+    "workbench.colorTheme": "Gruvbox Dark Hard",
+    "editor.fontFamily": "JetBrainsMono Nerd Font",
+    "editor.fontSize": 14,
+    "editor.tabSize": 4,
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.detectIndentation": false,
+    "editor.trimAutoWhitespace": true,
+    "editor.renderWhitespace": "trailing",
+    "files.insertFinalNewline": true,
+    "security.workspace.trust.enabled": true,
+    "editor.smoothScrolling": true,
+    "editor.minimap.enabled": false,
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "host-spawn",
+            "args": [
+                "bash"
+            ]
+        }
+    },
+    "update.mode": "manual"
+}

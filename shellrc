@@ -1,0 +1,84 @@
+#! /usr/bin/env bash
+
+export PATH="$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$PATH"
+export XDG_DATA_DIRS="/home/pervez/.local/share/flatpak/exports/share:$XDG_DATA_DIRS"
+export EDITOR="flatpak run com.visualstudio.code --wait"
+# export EDITOR="zed --wait"
+# export EDITOR="nvim"
+
+has_cmd() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+is_zsh() {
+    [ -n "$ZSH_VERSION" ]
+}
+
+is_bash() {
+    [ -n "$BASH_VERSION" ]
+}
+
+case $- in
+*i*) ;;
+*) return ;;
+esac
+
+is_zsh && eval "$(starship init zsh)"
+is_bash && eval "$(starship init bash)"
+
+is_bash && eval "$(fzf --bash)"
+is_zsh && eval "$(fzf --zsh)"
+
+is_bash && eval "$(zoxide init bash)"
+is_zsh && eval "$(zoxide init zsh)"
+
+alias c='flatpak run com.visualstudio.code'
+alias code='flatpak run com.visualstudio.code'
+alias g='git'
+alias h='btm'
+alias i='pikman install'
+alias u="pikman update && pikman upgrade"
+alias p='pikman'
+alias pi="pixi global install"
+alias t='tmux'
+alias v='nvim'
+alias s='rg'
+alias f='fd-find'
+alias kitty-theme='kitty +kitten themes'
+
+if ! has_cmd bat && has_cmd batcat; then
+    alias b='batcat'
+    alias cat='batcat'
+fi
+alias ls="eza --icons --group-directories-first"
+alias fd='fd-find'
+
+jupyter-lab() {
+    cd ~/jupyter-lab || {
+        echo "Error: Directory ~/jupyter-lab does not exist."
+        return
+    }
+    .venv/bin/jupyter lab
+}
+
+if has_cmd mise; then
+    is_bash && eval "$(~/.local/bin/mise activate bash)"
+    is_zsh && eval "$(~/.local/bin/mise activate zsh)"
+fi
+
+if ! has_cmd rustc; then
+    # shellcheck disable=SC1091
+    [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+fi
+
+system_update() {
+    pikman update && pikman upgrade
+    pikman --flatpak update --user -y
+    pikman --flatpak update -y
+
+    has_cmd pixi && pixi self-update
+    has_cmd pixi && pixi global update
+    has_cmd mise && mise self-update
+    has_cmd mise && mise upgrade --bump
+    chezmoi update
+}

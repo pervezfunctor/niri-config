@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+
+prompt_yn() {
+    local question="$1"
+    local default="${2:-y}"
+
+    read -p "$question (${default}/$([ "$default" = "y" ] && echo "n" || echo "y")) " -n 1 -r
+    echo ""
+
+    if [ -z "$REPLY" ]; then
+        REPLY="$default"
+    fi
+
+    [[ $REPLY =~ ^[Yy]$ ]]
+}
+
+system_packages() {
+    local -a packages=(
+        bat
+        brightnessctl
+        btm
+        distrobox
+        eza
+        fd-find
+        fzf
+        gh
+        git
+        gnome-keyring
+        golang
+        gum
+        htop
+        hypridle
+        imagemagick
+        just
+        keepassxc
+        lazygit
+        libsecret-tools
+        luarocks
+        micro
+        mpv
+        neovim
+        node-mermaid
+        nushell
+        papers
+        pass
+        pika-refind-btrfs-hooks
+        rclone
+        refind-btrfs
+        ripgrep
+        rsync
+        shellcheck
+        shfmt
+        snapper
+        snapper-gui
+        starship
+        tar
+        tmux
+        trash-cli
+        tree
+        tree-sitter-cli
+        unzip
+        zig
+        zoxide
+        duf
+        xh
+        git-delta
+        jq
+        incus
+        gdu
+        zsh
+        carapace
+        yazi
+        direnv
+        zstd
+    )
+
+    echo "Updating packages"
+    pikman update && pikman upgrade
+    echo "Installing essential packages"
+    pikman install "${packages[@]}"
+
+    has_cmd tectonic && return
+
+    curl --proto '=https' --tlsv1.2 -fsSL https://drop-sh.fullyjustified.net | sh
+    mv tectonic ~/.local/bin
+}
+
+incus_setup() {
+    sudo usermod -aG incus "$USER"
+    sudo usermod -aG incus-admin "$USER"
+    sudo systemctl enable --now incus.socket
+    sudo incus admin init --minimal
+}
+
+flatpaks() {
+    local -a flatpaks=(
+        com.github.tchx84.Flatseal
+        com.visualstudio.code
+        md.obsidian.Obsidian
+        org.telegram.desktop
+        sh.loft.devpod
+    )
+
+    echo "Installing flatpaks(vscode etc)"
+    pikman --flatpak install flathub "${flatpaks[@]}"
+}
+
+pixi_install() {
+    has_cmd pixi && {
+        echo "pixi is already installed"
+        return
+    }
+
+    echo "Installing pixi"
+    curl -fsSL https://pixi.sh/install.sh | sh
+    ~/.pixi/bin/pixi global install television mask
+}
+
+rust_install() {
+    has_cmd rustup && {
+        echo "rustup is already installed"
+        return
+    }
+
+    curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh
+}
+
+nushell_setup() {
+    echo "/usr/bin/nu" | sudo tee -a /etc/shells
+    chsh -s /usr/bin/nu "$USER"
+}
+
+vscode_extensions() {
+    local -a vscode_exts=(
+        jdinhlife.gruvbox
+        mads-hartmann.bash-ide-vscode
+        timonwong.shellcheck
+    )
+
+    echo "Installing vscode extensions"
+    flatpak run com.visualstudio.code --install-extension "${vscode_exts[@]}"
+}
+
+devpod_install() {
+    has_cmd devpod && {
+        echo "devpod is already installed"
+        return
+    }
+
+    echo "Installing devpod"
+    curl -L -o /tmp/devpod "https://github.com/loft-sh/devpod/releases/latest/download/devpod-darwin-arm64" && chmod +x /tmp/devpod && mv /tmp/devpod ~/.local/bin && rm -f /tmp/devpod
+}
+
+chezmoi_setup() {
+    cd || {
+        echo "Failed to change to home directory"
+        exit 1
+    }
+
+    echo "Setting up dotfiles with chezmoi"
+    sh -c "$(curl -fsLS get.chezmoi.io/lb)" -- init --apply https://github.com/pervezfunctor/pikman-niri-config.git
+}
+
+zsh_as_default() {
+    echo "Setting zsh as default shell"
+    chsh -s "$(which zsh)"
+}
+
+bashrc_setup() {
+    echo "Setting up bashrc"
+    if ! grep -q "chezmoi/shellrc" ~/.bashrc; then
+        echo "source ~/.local/share/chezmoi/shellrc" >>~/.bashrc
+    fi
+}
+
+mise_install() {
+    has_cmd mise && {
+        echo "mise is already installed"
+        return
+    }
+
+    curl https://mise.run | sh
+}
+
+zed_install() {
+    has_cmd zed && {
+        echo "zed is already installed"
+        return
+    }
+
+    echo "Installing zed"
+    curl -f https://zed.dev/install.sh | sh
+}
+
+astro_setup() {
+    trash ~/.config/nvim.bak || true
+    mv ~/.config/nvim ~/.config/nvim.bak || true
+    mkdir ~/.config/nvim || true
+    mv ~/.local/share/nvim ~/.local/share/nvim.bak || true
+    mv ~/.local/state/nvim ~/.local/state/nvim.bak || true
+    mv ~/.cache/nvim ~/.cache/nvim.bak || true
+    git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim
+    rm -rf ~/.config/nvim/.git
+}
+
+snapper_setup() {
+    has_cmd snapper && {
+        echo "snapper is already installed"
+        return
+    }
+    sudo snapper create-config /
+    sudo mkdir -p /var/lib/refind-btrfs
+    sudo chmod 755 /var/lib/refind-btrfs
+    sudo systemctl enable refind-btrfs --now
+}
+
+uv_install() {
+    has_cmd uv && {
+        echo "uv is already installed"
+        return
+    }
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    mkdir -p ~/jupyter-lab
+    cd ~/jupyter-lab || return
+
+    uv venv --seed
+    uv pip install pydantic
+    uv pip install jupyterlab
+}
+
+node_install() {
+    has_cmd volta && {
+        echo "volta is already installed"
+        return
+    }
+    curl -LsSf https://get.volta.sh | sh
+
+    volta install node@latest
+    npm install -g bash-language-server @google/gemini-cli
+}
+
+claude_install() {
+    has_cmd claude && {
+        echo "claude is already installed"
+        return
+    }
+    curl -fsSL https://claude.ai/install.sh | bash
+}
+
+main() {
+    export PATH="$HOME/.local/bin:$PATH"
+
+    prompt_yn "Do you want to install essential packages?" && system_packages
+    prompt_yn "Do you want to install flatpaks(vscode etc)?" && flatpaks
+    prompt_yn "Do you want to setup snapper?" && snapper_setup
+    prompt_yn "Do you want to install zed?" && zed_install
+    prompt_yn "Do you want to install astro?" && astro_setup
+    prompt_yn "Do you want to install rust?" && rust_install
+    prompt_yn "Do you want to install node?" && node_install
+    prompt_yn "Do you want to install uv?" && uv_install
+    prompt_yn "Do you want to install claude?" && claude_install
+    prompt_yn "Do you want to install vscode extensions?" && vscode_extensions
+    prompt_yn "Do you want to install pixi?" && pixi_install
+
+    if ! prompt_yn "Do you want to setup dotfiles with chezmoi?"; then
+        return 0
+    fi
+
+    chezmoi_setup
+
+    prompt_yn "Do you want to set up bashrc?" && bashrc_setup
+    prompt_yn "Do you want to set zsh as default shell?" && zsh_as_default
+    prompt_yn "Do you want to setup nushell?" && nushell_setup
+}
+
+main "$@"

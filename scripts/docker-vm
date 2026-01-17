@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+VM_NAME="docker"
+VM_CPUS=4
+VM_MEM="8GiB"
+VM_DISK="30GiB"
+
+echo "==> Checking Incus..."
+command -v incus >/dev/null
+
+if ! incus info "$VM_NAME" >/dev/null 2>&1; then
+    echo "Creating VM..."
+    incus launch images:alpine/edge \
+        "$VM_NAME" \
+        --vm \
+        -c security.secureboot=false \
+        -c limits.cpu="$VM_CPUS" \
+        -c limits.memory="$VM_MEM" \
+        -d root,size="$VM_DISK"
+else
+    echo "VM already exists."
+    VM_STATUS=$(incus list "$VM_NAME" --format csv --columns s)
+    if [ "$VM_STATUS" != "RUNNING" ]; then
+        echo "VM is not running (status: $VM_STATUS). Starting..."
+        incus start "$VM_NAME"
+    else
+        echo "VM is already running."
+    fi
+fi
+
+echo "==> Waiting for VM to become ready..."
+TIMEOUT=120
+ELAPSED=0
+INTERVAL=2
+
+while [ $ELAPSED -lt $TIMEOUT ]; do
+    if incus exec "$VM_NAME" -- sh -c 'ping -c1 1.1.1.1 >/dev/null 2>&1' 2>/dev/null; then
+        echo "VM is ready!"
+        break
+    fi
+    sleep $INTERVAL
+    ELAPSED=$((ELAPSED + INTERVAL))
+    echo "Waiting... (${ELAPSED}s/${TIMEOUT}s)"
+done
+
+if [ $ELAPSED -ge $TIMEOUT ]; then
+    echo "ERROR: VM failed to become ready within ${TIMEOUT} seconds"
+    exit 1
+fi
+
+USER_NAME="${USER:-$(whoami)}"
+PASSWORD="${PASSWORD:-$USER_NAME}"
+
+echo "==> Installing Docker inside VM..."
+incus exec "$VM_NAME" -- sh -eux <<EOF
+apk update
+
+apk add --no-cache \
+  docker \
+  docker-cli \
+  docker-openrc \
+  ca-certificates \
+  curl \
+  bash \
+  git \
+  doas \
+  openssh-server
+
+rc-update add docker boot
+rc-service docker start
+
+sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+rc-update add sshd default
+rc-service sshd start
+
+addgroup root docker || true
+
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p || true
+
+docker version
+docker run --rm hello-world
+
+if ! id "$USER_NAME" >/dev/null 2>&1; then
+  adduser -D -s /bin/bash "$USER_NAME"
+  echo "$USER_NAME:$PASSWORD" | chpasswd
+fi
+
+echo "permit nopass $USER_NAME as root" > /etc/doas.d/doas.conf
+addgroup "$USER_NAME" docker 2>/dev/null || true
+EOF
+
+echo "User '$USER_NAME' created with doas permissions (password: '$PASSWORD')"
+echo "Connect as user: incus exec $VM_NAME -- su - $USER_NAME"
+echo "Or via ssh: ssh $USER_NAME@<vm-ip-address>"
+echo "Get VM IP with: incus list $VM_NAME --format csv --columns 4"
