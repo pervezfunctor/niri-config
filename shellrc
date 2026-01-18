@@ -46,6 +46,15 @@ alias s='rg'
 alias f='fd-find'
 alias kitty-theme='kitty +kitten themes'
 
+alias che='chezmoid edit'
+alias cha='chezmoid apply'
+alias chs='chezmoid status'
+alias chu='chezmoid update'
+alias chc='chezmoid cd'
+alias chw='$HOME/.local/share/chezmoi/scripts/chezmoi-sync & disown'
+alias chA='chezmoid add'
+alias chf='chezmoid forget'
+
 if ! has_cmd bat && has_cmd batcat; then
     alias b='batcat'
     alias cat='batcat'

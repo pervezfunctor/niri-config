@@ -85,6 +85,10 @@ system_packages() {
     mv tectonic ~/.local/bin
 }
 
+mangowc_install() {
+    pikman install mangowc dms
+}
+
 incus_setup() {
     sudo usermod -aG incus "$USER"
     sudo usermod -aG incus-admin "$USER"

@@ -63,3 +63,12 @@ alias gfm = git pull
 alias gcm = git commit --message
 alias gia = git add
 alias gco = git checkout
+
+alias che = chezmoid edit
+alias cha = chezmoid apply
+alias chs = chezmoid status
+alias chu = chezmoid update
+alias chc = chezmoid cd
+alias chw = ~/.local/share/chezmoi/scripts/chezmoi-sync & disown
+alias chA = chezmoid add
+alias chf = chezmoid forget
