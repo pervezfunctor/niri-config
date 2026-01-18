@@ -1,0 +1,30 @@
+#! /usr/bin/env bash
+
+is_running() {
+  pgrep -fu "$USER" "$1" >/dev/null || systemctl --user is-active --quiet "$1"
+}
+
+has_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+lockscreen() {
+  if is_running dms && has_cmd dms; then
+    dms ipc call lock lock
+  elif is_running pikabar && has_cmd pikabar-lock; then
+    pikabar-lock
+  elif is_running noctalia-shell && has_cmd noctalia-shell; then
+    noctalia-shell ipc call lockScreen lock
+  elif is_running caelistia-shell && has_cmd caelistia-shell; then
+    # caelestia handles this itself
+    # caelistia-shell ipc call lockscreen lock
+    :
+  elif has_cmd swaylock; then
+    swaylock -f
+  else
+    echo "No lockscreen command found" >&2
+    return 1
+  fi
+}
+
+lockscreen

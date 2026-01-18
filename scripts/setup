@@ -71,6 +71,7 @@ system_packages() {
         carapace
         yazi
         direnv
+        wlr-randr
         zstd
     )
 

@@ -1,0 +1,56 @@
+#! /usr/bin/env bash
+
+has_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+monitor_off() {
+  if [[ "$XDG_CURRENT_DESKTOP" == *"Hyprland"* ]]; then
+    hyprctl dispatch dpms off
+  elif [[ "$XDG_CURRENT_DESKTOP" == *"mango"* ]]; then
+    mmsg -d disable_monitor,DP-1
+    mmsg -d disable_monitor,DP-2
+    mmsg -d disable_monitor,HDMI-A-1
+    mmsg -d disable_monitor,HDMI-A-2
+    mmsg -d disable_monitor,eDP-1
+  elif [[ "$XDG_CURRENT_DESKTOP" == *"niri"* ]]; then
+    niri msg action power-off-monitors
+  elif [[ "$XDG_CURRENT_DESKTOP" == *"sway"* ]]; then
+    swaymsg "output * power off"
+  else
+    has_cmd wlr-randr && wlr-randr --output '*' --off && return 0
+    return 1
+  fi
+}
+
+monitor_on() {
+  if [[ "$XDG_CURRENT_DESKTOP" == *"Hyprland"* ]]; then
+    hyprctl dispatch dpms on
+  elif [[ "$XDG_CURRENT_DESKTOP" == *"mango"* ]]; then
+    mmsg -d enable_monitor,DP-1
+    mmsg -d enable_monitor,DP-2
+    mmsg -d enable_monitor,HDMI-A-1
+    mmsg -d enable_monitor,HDMI-A-2
+    mmsg -d enable_monitor,eDP-1
+  elif [[ "$XDG_CURRENT_DESKTOP" == *"niri"* ]]; then
+    niri msg action power-on-monitors
+  elif [[ "$XDG_CURRENT_DESKTOP" == *"sway"* ]]; then
+    swaymsg "output * power on"
+  else
+    has_cmd wlr-randr && wlr-randr --output '*' --on && return 0
+    return 1
+  fi
+}
+
+case "$1" in
+on)
+  monitor_on
+  ;;
+off)
+  monitor_off
+  ;;
+*)
+  echo "Usage: $0 {on|off}" >&2
+  exit 1
+  ;;
+esac
