@@ -7,6 +7,7 @@
     "editor.formatOnSave": true,
     "editor.detectIndentation": false,
     "editor.trimAutoWhitespace": true,
+    "files.trimTrailingWhitespace": true,
     "editor.renderWhitespace": "trailing",
     "files.insertFinalNewline": true,
     "security.workspace.trust.enabled": true,
