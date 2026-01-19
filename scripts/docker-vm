@@ -10,23 +10,23 @@ echo "==> Checking Incus..."
 command -v incus >/dev/null
 
 if ! incus info "$VM_NAME" >/dev/null 2>&1; then
-    echo "Creating VM..."
-    incus launch images:alpine/edge \
-        "$VM_NAME" \
-        --vm \
-        -c security.secureboot=false \
-        -c limits.cpu="$VM_CPUS" \
-        -c limits.memory="$VM_MEM" \
-        -d root,size="$VM_DISK"
+	echo "Creating VM..."
+	incus launch images:alpine/edge \
+		"$VM_NAME" \
+		--vm \
+		-c security.secureboot=false \
+		-c limits.cpu="$VM_CPUS" \
+		-c limits.memory="$VM_MEM" \
+		-d root,size="$VM_DISK"
 else
-    echo "VM already exists."
-    VM_STATUS=$(incus list "$VM_NAME" --format csv --columns s)
-    if [ "$VM_STATUS" != "RUNNING" ]; then
-        echo "VM is not running (status: $VM_STATUS). Starting..."
-        incus start "$VM_NAME"
-    else
-        echo "VM is already running."
-    fi
+	echo "VM already exists."
+	VM_STATUS=$(incus list "$VM_NAME" --format csv --columns s)
+	if [ "$VM_STATUS" != "RUNNING" ]; then
+		echo "VM is not running (status: $VM_STATUS). Starting..."
+		incus start "$VM_NAME"
+	else
+		echo "VM is already running."
+	fi
 fi
 
 echo "==> Waiting for VM to become ready..."
@@ -35,18 +35,18 @@ ELAPSED=0
 INTERVAL=2
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
-    if incus exec "$VM_NAME" -- sh -c 'ping -c1 1.1.1.1 >/dev/null 2>&1' 2>/dev/null; then
-        echo "VM is ready!"
-        break
-    fi
-    sleep $INTERVAL
-    ELAPSED=$((ELAPSED + INTERVAL))
-    echo "Waiting... (${ELAPSED}s/${TIMEOUT}s)"
+	if incus exec "$VM_NAME" -- sh -c 'ping -c1 1.1.1.1 >/dev/null 2>&1' 2>/dev/null; then
+		echo "VM is ready!"
+		break
+	fi
+	sleep $INTERVAL
+	ELAPSED=$((ELAPSED + INTERVAL))
+	echo "Waiting... (${ELAPSED}s/${TIMEOUT}s)"
 done
 
 if [ $ELAPSED -ge $TIMEOUT ]; then
-    echo "ERROR: VM failed to become ready within ${TIMEOUT} seconds"
-    exit 1
+	echo "ERROR: VM failed to become ready within ${TIMEOUT} seconds"
+	exit 1
 fi
 
 USER_NAME="${USER:-$(whoami)}"

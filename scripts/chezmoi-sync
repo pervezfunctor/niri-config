@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
 
 while inotifywait -q -r -e close_write ~/.local/share/chezmoi; do
-    chezmoi apply
+	chezmoi apply
 done
