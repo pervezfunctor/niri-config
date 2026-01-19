@@ -54,11 +54,13 @@ alias cc='chezmoi cd'
 alias cw='$HOME/.local/share/chezmoi/scripts/chezmoi-sync & disown'
 alias cA='chezmoi add'
 alias cf='chezmoi forget'
+alias ced="EDITOR='flatpak run com.visualstudio.code --wait' chezmoi edit"
 
 if ! has_cmd bat && has_cmd batcat; then
     alias b='batcat'
     alias cat='batcat'
 fi
+
 alias ls="eza --icons --group-directories-first"
 alias fd='fd-find'
 
@@ -91,3 +93,19 @@ system_update() {
     has_cmd mise && mise upgrade --bump
     chezmoi update
 }
+
+alias stls='sudo systemctl status'
+alias stle='sudo systemctl enable --now'
+alias stld='sudo systemctl disable'
+alias stlp='sudo systemctl stop'
+alias stlr='sudo systemctl restart'
+alias stlg='sudo systemctl list-units'
+alias stlf='sudo systemctl list-units --all --state=failed'
+
+alias utle='systemctl --user enable --now'
+alias utld='systemctl --user disable'
+alias utlp='systemctl --user stop'
+alias utlr='systemctl --user restart'
+alias utlg='systemctl --user list-units'
+alias utlf='systemctl --user list-units --all --state=failed'
+
