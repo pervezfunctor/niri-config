@@ -3,7 +3,7 @@ $env.config = {
 }
 
 def jupyter-lab [] {
-    let jupyter_dir = ($nu.home-path | path join jupyter-lab)
+    let jupyter_dir = ($nu.home-dir | path join jupyter-lab)
 
     if not ($jupyter_dir | path exists) {
         error make {
@@ -27,13 +27,13 @@ def 'has_cmd' [ app: string ] {
   (which $app | is-not-empty)
 }
 
-if (($nu.home-path | path join .cargo/env.nu) | path exists) {
-    source $"($nu.home-path)/.cargo/env.nu"
+if ("~/.cargo/env.nu" | path expand | path exists) {
+    source ~/.cargo/env.nu
 }
 
-if (($nu.default-config-dir | path join mise.nu) | path exists) {
-    use ($nu.default-config-dir | path join mise.nu)
+if ("~/.config/nushell/mise.nu" | path expand | path exists) {
+    use ~/.config/nushell/mise.nu
 }
 
-source ($nu.default-config-dir | path join starship.nu)
-source ($nu.default-config-dir | path join zoxide.nu)
+source ~/.config/nushell/starship.nu
+source ~/.config/nushell/zoxide.nu
