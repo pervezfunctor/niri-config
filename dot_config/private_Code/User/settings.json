@@ -1,10 +1,10 @@
 {
     "editor.fontFamily": "JetBrainsMono Nerd Font",
     "editor.fontSize": 14,
-    "editor.tabSize": 4,
+    "editor.tabSize": 2,
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
-    "editor.detectIndentation": false,
+    "editor.detectIndentation": true,
     "editor.trimAutoWhitespace": true,
     "files.trimTrailingWhitespace": true,
     "editor.renderWhitespace": "trailing",
