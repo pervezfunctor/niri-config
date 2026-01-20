@@ -40,6 +40,7 @@ system_packages_install() {
         bat
         btm
         carapace
+        cmake
         direnv
         distrobox
         duf
@@ -284,10 +285,23 @@ brew_install() {
     brew install bash-language-server @google/gemini-cli opencode-ai tectonic
 }
 
+volta_install() {
+    has_cmd volta && {
+        log "volta is already installed"
+        return
+    }
+
+    curl https://get.volta.sh | bash
+
+    log "To install node with volta:"
+    log "\tvolta install node@latest"
+}
+
 dialog_choices() {
     local -a dialog_items=(
         "system_packages" "Install essential packages" "on"
         "flatpaks" "Install flatpaks" "on"
+        "brew" "Install brew" "on"
         "snapper" "Setup snapper(btrfs snapshots)" "on"
         "chezmoi" "Setup dotfiles with chezmoi" "on"
         "bashrc" "Set up bashrc" "on"
@@ -295,6 +309,7 @@ dialog_choices() {
         "nushell" "Setup nushell" "on"
         "incus" "Setup incus" "on"
         "devpod" "Setup devpod" "on"
+        "volta" "Install volta" "on"
         "zed" "Install zed" "off"
         "astro" "Setup astro(nvim)" "off"
         "rust" "Install rust" "off"
@@ -303,7 +318,6 @@ dialog_choices() {
         "vscode-extensions" "Install vscode extensions" "off"
         "mangowc" "Setup mangowc" "off"
         "mise" "Setup mise" "off"
-        "brew" "Install brew" "off"
     )
 
     local selected_output
@@ -344,6 +358,8 @@ main() {
 
     prompt_yn "Do you want to install essential packages?" && system_packages_install
     prompt_yn "Do you want to install flatpaks?" && flatpaks_install
+    prompt_yn "Do you want to install brew?" && brew_install
+    prompt_yn "Do you want to install volta?" && volta_install
     prompt_yn "Do you want to setup snapper(btrfs snapshots)?" && snapper_install
     prompt_yn "Do you want to install zed?" && zed_install
     prompt_yn "Do you want to setup astro(nvim)?" && astro_install
@@ -355,7 +371,6 @@ main() {
     prompt_yn "Do you want to setup mangowc?" && mangowc_install
     prompt_yn "Do you want to setup devpod?" && devpod_install
     prompt_yn "Do you want to setup mise?" && mise_install
-    prompt_yn "Do you want to install brew?" && brew_install
 
     if ! prompt_yn "Do you want to setup dotfiles with chezmoi?"; then
         return 0

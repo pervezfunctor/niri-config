@@ -1,7 +1,8 @@
 $env.EDITOR = ["code", "--wait"]
 $env.VISUAL = ["code", "--wait"]
 
-$env.PATH = ($env.PATH | prepend [$"($env.HOME)/bin", $"($env.HOME)/.local/bin", $"($env.HOME)/.opencode/bin"])
+$env.VOLTA_HOME = ($env.HOME | path join .volta)
+$env.PATH = ($env.PATH | prepend [$"($env.HOME)/bin", $"($env.HOME)/.local/bin", $"($env.HOME)/.opencode/bin", $"($env.VOLTA_HOME)/bin", /home/linuxbrew/.linuxbrew/bin])
 
 if ("~/.local/bin/mise" | path expand | path exists) {
     let mise_path = ($nu.default-config-dir | path join mise.nu)
@@ -15,7 +16,10 @@ alias c = code
 alias g = git
 alias h = btm
 alias i = pikman install
-alias u = pikman update && pikman upgrade
+def u [] {
+    pikman update
+    pikman upgrade
+}
 alias p = pikman
 alias t = tmux
 alias v = nvim
@@ -63,3 +67,4 @@ alias utlp = systemctl --user stop
 alias utlr = systemctl --user restart
 alias utlg = systemctl --user list-units
 alias utlf = systemctl --user list-units --all --state=failed
+

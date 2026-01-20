@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 
-export PATH="$HOME/.opencode/bin:$PATH:$HOME/bin:$HOME/.local/bin:$PATH"
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$HOME/.opencode/bin:$PATH:$HOME/bin:$HOME/.local/bin:$VOLTA_HOME/bin:$PATH"
 
 export XDG_DATA_DIRS="/home/pervez/.local/share/flatpak/exports/share:$XDG_DATA_DIRS"
 
