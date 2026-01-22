@@ -307,8 +307,10 @@ vscode_install() {
     brew install --cask visual-studio-code-linux
 
     local -a vscode_exts=(
+        hverlin.mise-vscode
         jdinhlife.gruvbox
         mads-hartmann.bash-ide-vscode
+        TheNuProjectContributors.vscode-nushell-lang
         timonwong.shellcheck
     )
 
