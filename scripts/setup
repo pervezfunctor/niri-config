@@ -4,6 +4,14 @@ has_cmd() {
     command -v "$1" >/dev/null 2>&1
 }
 
+dir_exists() {
+    [ -d "$1" ]
+}
+
+is_pikaos() {
+    . /etc/os-release && [ "$ID" = "pika" ]
+}
+
 prompt_yn() {
     local prompt="$1"
     local response
@@ -38,11 +46,14 @@ error() {
 system_packages_install() {
     local -a packages=(
         bibata-cursor-theme
+        cmake
         distrobox
         flatpak
+        g++
         gcc
         git
         gnome-keyring
+        imagemagick
         incus
         libsecret-tools
         luarocks
@@ -60,20 +71,23 @@ system_packages_install() {
         rsync
         snapper
         snapper-gui
+        starship
         tar
         tmux
+        trash-cli
         tree
         unzip
         virt-manager
+        zig
         zsh
         zstd
     )
 
     log "Updating packages"
-    pikman update && pikman upgrade
+    sudo apt update && sudo apt upgrade -y
 
     log "Installing essential packages"
-    pikman install "${packages[@]}"
+    sudo apt install -y "${packages[@]}"
 
     flatpaks_install
     snapper_install
@@ -94,6 +108,8 @@ incus_install() {
 }
 
 flatpaks_install() {
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo --user
+
     local -a flatpaks=(
         com.github.tchx84.Flatseal
         sh.loft.devpod
@@ -102,8 +118,15 @@ flatpaks_install() {
 
     log "Installing flatpaks(vscode etc)"
     for pkg in "${flatpaks[@]}"; do
-        flatpak --user install flathub "$pkg"
+        flatpak install -y --user flathub "$pkg"
     done
+}
+
+emacs_install() {
+    log "Installing emacs"
+    pikman --arch install emacs
+    git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
+    ∙ ~/.config/emacs/bin/doom install
 }
 
 rust_install() {
@@ -144,11 +167,11 @@ astro_install() {
     fi
 
     trash ~/.config/nvim.bak || true
-    mv ~/.config/nvim ~/.config/nvim.bak || true
-    mkdir ~/.config/nvim || true
-    mv ~/.local/share/nvim ~/.local/share/nvim.bak || true
-    mv ~/.local/state/nvim ~/.local/state/nvim.bak || true
-    mv ~/.cache/nvim ~/.cache/nvim.bak || true
+    mv ~/.config/nvim ~/.config/nvim.bak 2>/dev/null || true
+    mkdir ~/.config/nvim 2>/dev/null || true
+    mv ~/.local/share/nvim ~/.local/share/nvim.bak 2>/dev/null || true
+    mv ~/.local/state/nvim ~/.local/state/nvim.bak 2>/dev/null || true
+    mv ~/.cache/nvim ~/.cache/nvim.bak 2>/dev/null || true
     git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim
     rm -rf ~/.config/nvim/.git
 }
@@ -172,7 +195,7 @@ dotfiles_install() {
     }
 
     log "Setting up dotfiles with chezmoi"
-    sh -c "$(curl -fsLS get.chezmoi.io/lb)" -- init --apply https://github.com/pervezfunctor/pikman-niri-config.git
+    sh -c "$(curl -fsLS get.chezmoi.io/lb)" -- init --apply https://github.com/pervezfunctor/chezmoi.git
 
     zshrc_install
     bashrc_install
@@ -181,47 +204,11 @@ dotfiles_install() {
 }
 
 devtools_install() {
-    has_cmd mise && {
-        log "mise is already installed"
-        return
+    has_cmd mise || {
+        curl https://mise.run | sh
     }
 
-    curl https://mise.run | sh
-
-    local -a pkgs=(
-        bat
-        bottom
-        carapace
-        cmake
-        direnv
-        duf
-        eza
-        fzf
-        gdu
-        gh
-        gum
-        shfmt
-        imagemagick
-        jq
-        just
-        lazygit
-        mask
-        ripgrep
-        shellcheck
-        starship
-        television
-        xh
-        yazi
-        zoxide
-        node@latest
-        uv
-        go
-        rust
-        pixi
-        zig
-    )
-
-    mise use -g "${pkgs[@]}"
+    mise use -g pixi node@latest uv
 
     local -a npm_pkgs=(
         @mermaid-js/mermaid-cli
@@ -233,7 +220,34 @@ devtools_install() {
         npm install -g "$pkg"
     done
 
-    pixi global install bash-language-server tectonic fd-find trash-cli
+    local -a pixi_pkgs=(
+        bash-language-server
+        tectonic
+        fd
+        bat
+        bottom
+        carapace
+        direnv
+        duf
+        eza
+        fzf
+        gdu
+        gh
+        go-gum
+        go-shfmt
+        jq
+        just
+        lazygit
+        mask
+        ripgrep
+        shellcheck
+        television
+        xh
+        yazi
+        zoxide
+    )
+
+    pixi global install "${pixi_pkgs[@]}"
 
     dir_exists ~/jupyter-lab || {
         mkdir -p ~/jupyter-lab
@@ -342,6 +356,11 @@ dialog_choices() {
 }
 
 main() {
+    is_pikaos || {
+        error "This script is only meant to be run on PikaOS"
+        return 1
+    }
+
     export PATH="$HOME/.opencode/bin:$PATH:$HOME/bin:$HOME/.local/bin:$PATH"
 
     mkdir -p ~/Pictures/Screenshots
