@@ -23,7 +23,7 @@ def jupyter-lab [] {
     ^$jupyter lab
 }
 
-if ($nu.home-dir | path join .cargo | path join env.nu | path exists) {
+if ($nu.default-config-dir | path join .cargo | path join env.nu | path exists) {
     source ($nu.home-dir | path join .cargo | path join env.nu)
 }
 
