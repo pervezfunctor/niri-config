@@ -39,6 +39,7 @@ system_packages_install() {
     local -a packages=(
         bibata-cursor-theme
         distrobox
+        flatpak
         gcc
         git
         gnome-keyring
@@ -64,7 +65,6 @@ system_packages_install() {
         tree
         unzip
         virt-manager
-        zig
         zsh
         zstd
     )
@@ -74,6 +74,10 @@ system_packages_install() {
 
     log "Installing essential packages"
     pikman install "${packages[@]}"
+
+    flatpaks_install
+    snapper_install
+    incus_install
 }
 
 mangowc_install() {
@@ -97,8 +101,8 @@ flatpaks_install() {
     )
 
     log "Installing flatpaks(vscode etc)"
-    for flatpak in "${flatpaks[@]}"; do
-        pikman --flatpak install flathub "$flatpak"
+    for pkg in "${flatpaks[@]}"; do
+        flatpak --user install flathub "$pkg"
     done
 }
 
@@ -119,25 +123,6 @@ nushell_install() {
     chsh -s /usr/bin/nu "$USER"
 }
 
-vscode-extensions_install() {
-    has_cmd code || {
-        error "vscode is not installed, cannot install extensions"
-        return
-    }
-
-    local -a vscode_exts=(
-        jdinhlife.gruvbox
-        mads-hartmann.bash-ide-vscode
-        timonwong.shellcheck
-    )
-
-    log "Installing vscode extensions"
-    for ext in "${vscode_exts[@]}"; do
-        log "Installing $ext"
-        code --install-extension "$ext"
-    done
-}
-
 devpod_install() {
     has_cmd devpod && {
         log "devpod is already installed"
@@ -153,14 +138,19 @@ devpod_install() {
     rm -f "$devpod_tmp"
 }
 
-chezmoi_install() {
-    cd || {
-        error "Failed to change to home directory"
-        return
-    }
+astro_install() {
+    if dir_exists ~/.config/nvim; then
+        prompt_yn "Found existing nvim config. Do you want to trash and replace with AstroNvim?" || return 0
+    fi
 
-    log "Setting up dotfiles with chezmoi"
-    sh -c "$(curl -fsLS get.chezmoi.io/lb)" -- init --apply https://github.com/pervezfunctor/pikman-niri-config.git
+    trash ~/.config/nvim.bak || true
+    mv ~/.config/nvim ~/.config/nvim.bak || true
+    mkdir ~/.config/nvim || true
+    mv ~/.local/share/nvim ~/.local/share/nvim.bak || true
+    mv ~/.local/state/nvim ~/.local/state/nvim.bak || true
+    mv ~/.cache/nvim ~/.cache/nvim.bak || true
+    git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim
+    rm -rf ~/.config/nvim/.git
 }
 
 zshrc_install() {
@@ -175,13 +165,90 @@ bashrc_install() {
     }
 }
 
-mise_install() {
+dotfiles_install() {
+    cd || {
+        error "Failed to change to home directory"
+        return
+    }
+
+    log "Setting up dotfiles with chezmoi"
+    sh -c "$(curl -fsLS get.chezmoi.io/lb)" -- init --apply https://github.com/pervezfunctor/pikman-niri-config.git
+
+    zshrc_install
+    bashrc_install
+    nushell_install
+    astro_install
+}
+
+devtools_install() {
     has_cmd mise && {
         log "mise is already installed"
         return
     }
 
     curl https://mise.run | sh
+
+    local -a pkgs=(
+        bat
+        bottom
+        carapace
+        cmake
+        direnv
+        duf
+        eza
+        fzf
+        gdu
+        gh
+        gum
+        shfmt
+        imagemagick
+        jq
+        just
+        lazygit
+        mask
+        ripgrep
+        shellcheck
+        starship
+        television
+        xh
+        yazi
+        zoxide
+        node@latest
+        uv
+        go
+        rust
+        pixi
+        zig
+    )
+
+    mise use -g "${pkgs[@]}"
+
+    local -a npm_pkgs=(
+        @mermaid-js/mermaid-cli
+        @google/gemini-cli
+        opencode-ai
+    )
+    for pkg in "${npm_pkgs[@]}"; do
+        log "Installing $pkg"
+        npm install -g "$pkg"
+    done
+
+    pixi global install bash-language-server tectonic fd-find trash-cli
+
+    dir_exists ~/jupyter-lab || {
+        mkdir -p ~/jupyter-lab
+        cd ~/jupyter-lab || {
+            error "Failed to change to jupyter-lab directory"
+            return
+        }
+        uv venv --seed
+        uv pip install pydantic
+        uv pip install jupyterlab
+    }
+
+    has_cmd claude || curl -fsSL https://claude.ai/install.sh | bash
+    devpod_install
+    vscode_install
 }
 
 zed_install() {
@@ -192,17 +259,6 @@ zed_install() {
 
     log "Installing zed"
     curl -f https://zed.dev/install.sh | sh
-}
-
-astro_install() {
-    trash ~/.config/nvim.bak || true
-    mv ~/.config/nvim ~/.config/nvim.bak || true
-    mkdir ~/.config/nvim || true
-    mv ~/.local/share/nvim ~/.local/share/nvim.bak || true
-    mv ~/.local/state/nvim ~/.local/state/nvim.bak || true
-    mv ~/.cache/nvim ~/.cache/nvim.bak || true
-    git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim
-    rm -rf ~/.config/nvim/.git
 }
 
 snapper_install() {
@@ -217,138 +273,45 @@ snapper_install() {
     sudo systemctl enable refind-btrfs --now
 }
 
-uv_install() {
-    has_cmd uv || {
-        log "Installing uv"
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-    }
-
-    mkdir -p ~/jupyter-lab
-    cd ~/jupyter-lab || {
-        error "Failed to change to jupyter-lab directory"
-        return
-    }
-    uv venv --seed
-    uv pip install pydantic
-    uv pip install jupyterlab
-
-    cd || {
-        warn "Failed to change to home directory"
-        return
-    }
-}
-
-claude_install() {
-    has_cmd claude && {
-        log "claude is already installed"
-        return
-    }
-    curl -fsSL https://claude.ai/install.sh | bash
-}
-
 brew_install() {
-    has_cmd brew && {
-        log "brew is already installed"
-        return
+    has_cmd brew || {
+        log "Installing brew"
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     }
-
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
     brew tap ublue-os/tap
+}
+
+vscode_install() {
+    has_cmd code && {
+        log "vscode is already installed"
+        return
+    }
+
+    brew_install
+
     brew install --cask visual-studio-code-linux
-}
 
-volta_install() {
-    has_cmd volta && {
-        log "volta is already installed"
-        return
-    }
-
-    curl https://get.volta.sh | bash
-
-    volta install node@latest
-
-    local -a pkgs=(
-        @mermaid-js/mermaid-cli
-        @google/gemini-cli
-        opencode-ai
+    local -a vscode_exts=(
+        jdinhlife.gruvbox
+        mads-hartmann.bash-ide-vscode
+        timonwong.shellcheck
     )
-    for pkg in "${pkgs[@]}"; do
-        log "Installing $pkg"
-        npm install -g "$pkg"
-    done
-}
 
-pixi_install() {
-    has_cmd pixi && {
-        log "pixi is already installed"
-        return
-    }
-
-    log "Installing pixi"
-    curl -fsSL https://pixi.sh/install.sh | sh
-    local -a pkgs=(
-        bash-language-server
-        bat
-        bottom
-        carapace
-        cmake
-        direnv
-        duf
-        eza
-        fd-find
-        fzf
-        gdu
-        gh
-        git-delta
-        go-gum
-        go-shfmt
-        gum
-        imagemagick
-        jq
-        just
-        lazygit
-        mask
-        ripgrep
-        shellcheck
-        starship
-        tectonic
-        television
-        trash-cli
-        tree-sitter-cli
-        xh
-        yazi
-        zoxide
-    )
-    for pkg in "${pkgs[@]}"; do
-        log "Installing $pkg"
-        ~/.pixi/bin/pixi global install "$pkg"
+    log "Installing vscode extensions"
+    for ext in "${vscode_exts[@]}"; do
+        log "Installing $ext"
+        code --install-extension "$ext"
     done
 }
 
 dialog_choices() {
     local -a dialog_items=(
         "system_packages" "Install essential packages" "on"
-        "flatpaks" "Install flatpaks" "on"
-        "brew" "Install brew" "on"
-        "snapper" "Setup snapper(btrfs snapshots)" "on"
-        "chezmoi" "Setup dotfiles with chezmoi" "on"
-        "bashrc" "Set up bashrc" "on"
-        "zshrc" "Set zsh as default shell" "on"
-        "nushell" "Setup nushell" "on"
-        "incus" "Setup incus" "on"
-        "devpod" "Setup devpod" "on"
-        "volta" "Install volta" "on"
-        "pixi" "Install pixi" "on"
-        "zed" "Install zed" "off"
-        "astro" "Setup astro(nvim)" "off"
-        "rust" "Install rust" "off"
-        "uv" "Install uv" "off"
-        "claude" "Install claude" "off"
-        "vscode-extensions" "Install vscode extensions" "off"
+        "devtools" "Setup devtools" "on"
+        "dotfiles" "Setup dotfiles with chezmoi" "on"
         "mangowc" "Setup mangowc" "off"
-        "mise" "Setup mise" "off"
+        "zed" "Install zed" "off"
     )
 
     local selected_output
@@ -388,31 +351,16 @@ main() {
     fi
 
     prompt_yn "Do you want to install essential packages?" && system_packages_install
-    prompt_yn "Do you want to install flatpaks?" && flatpaks_install
-    prompt_yn "Do you want to install brew?" && brew_install
-    prompt_yn "Do you want to install volta?" && volta_install
-    prompt_yn "Do you want to install pixi?" && pixi_install
-    prompt_yn "Do you want to setup snapper(btrfs snapshots)?" && snapper_install
-    prompt_yn "Do you want to install zed?" && zed_install
-    prompt_yn "Do you want to setup astro(nvim)?" && astro_install
-    prompt_yn "Do you want to install rust?" && rust_install
-    prompt_yn "Do you want to install uv?" && uv_install
-    prompt_yn "Do you want to install claude?" && claude_install
-    prompt_yn "Do you want to install vscode extensions?" && vscode-extensions_install
-    prompt_yn "Do you want to setup incus?" && incus_install
+    prompt_yn "Do you want to setup devtools?" && devtools_install
+    prompt_yn "Do you want to setup dotfiles with chezmoi?" && dotfiles_install
     prompt_yn "Do you want to setup mangowc?" && mangowc_install
-    prompt_yn "Do you want to setup devpod?" && devpod_install
-    prompt_yn "Do you want to setup mise?" && mise_install
+    prompt_yn "Do you want to install zed?" && zed_install
 
     if ! prompt_yn "Do you want to setup dotfiles with chezmoi?"; then
         return 0
     fi
 
-    chezmoi_install
-
-    prompt_yn "Do you want to set up bashrc?" && bashrc_install
-    prompt_yn "Do you want to set zsh as default shell?" && zshrc_install
-    prompt_yn "Do you want to setup nushell as default shell?" && nushell_install
+    dotfiles_install
 }
 
 main "$@"
