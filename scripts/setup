@@ -38,6 +38,7 @@ error() {
 system_packages_install() {
     local -a packages=(
         bat
+        bibata-cursor-theme
         btm
         carapace
         cmake
@@ -71,6 +72,8 @@ system_packages_install() {
         papers
         pass
         pika-refind-btrfs-hooks
+        qt5ct
+        qt6ct
         rclone
         refind-btrfs
         ripgrep
