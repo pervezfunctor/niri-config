@@ -325,7 +325,8 @@ dialog_choices() {
 
     local -a selected_tasks=()
     if [ -n "$selected_output" ]; then
-        mapfile -t selected_tasks <<<"$selected_output"
+        # Parse space-separated quoted items from dialog output
+        read -ra selected_tasks <<<"$selected_output"
     fi
 
     if [ ${#selected_tasks[@]} -eq 0 ]; then
@@ -336,7 +337,7 @@ dialog_choices() {
     for task in "${selected_tasks[@]}"; do
         task=${task//\"/}
         log "Executing: $task"
-        $task
+        "${task}_install"
     done
 }
 
