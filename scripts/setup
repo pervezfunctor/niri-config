@@ -334,7 +334,7 @@ whiptail_choices() {
     )
 
     local selected_output
-    selected_output=$(whiptail --stdout --checklist "Select tasks to execute:" 25 60 19 "${whiptail_items[@]}")
+    selected_output=$(whiptail --checklist "Select tasks to execute:" 25 60 19 "${whiptail_items[@]}" 3>&1 1>&2 2>&3)
 
     local exit_code=$?
     if [ $exit_code -ne 0 ]; then
@@ -344,7 +344,7 @@ whiptail_choices() {
 
     local -a selected_tasks=()
     if [ -n "$selected_output" ]; then
-        # Parse space-separated quoted items from dialog output
+        # Parse space-separated quoted items from whiptail output
         read -ra selected_tasks <<<"$selected_output"
     fi
 
