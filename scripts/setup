@@ -297,6 +297,7 @@ brew_install() {
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     }
     brew tap ublue-os/tap
+    brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
 }
 
 vscode_install() {
@@ -306,7 +307,6 @@ vscode_install() {
     }
 
     brew_install
-
     brew install --cask visual-studio-code-linux
 
     local -a vscode_exts=(
