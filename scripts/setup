@@ -73,11 +73,13 @@ brew_install() {
 }
 
 mangowc_install() {
-    log "Installing mangowc and dms"
-    if is_fedora; then
-        sudo dnf install -y mangowc dms
-    elif is_pikaos; then
-        pikman install mangowc dms
+    log "Installing mangowc"
+
+    if is_pikaos; then
+        pikman install mangowc
+    elif is_fedora && prompt_yn "need terra repository for installing mango. This is NOT stable. Still enable it?"; then
+        sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+        sudo dnf install -y mangowc
     else
         error "Unsupported distro"
         return 1
@@ -116,6 +118,7 @@ system_packages_install() {
         gcc
         git
         gnome-keyring
+        hypridle
         incus
         luarocks
         make
@@ -157,8 +160,9 @@ system_packages_install() {
     else
         sudo dnf update -y
         sudo dnf copr enable avengemedia/dms
+        sudo dnf copr enable solopasha/hyprland
         sudo dnf install -y "${packages[@]}"
-        sudo dnf install -y niri dms sddm sddm-themes nu
+        sudo dnf install -y niri dms sddm sddm-themes nu hypridle
         systemctl --user add-wants niri.service dms
     fi
 
