@@ -84,7 +84,7 @@ spawn-at-startup "systemctl" "--user" "enable" "--now" "hypridle"
 spawn-at-startup "swww-daemon"
 spawn-sh-at-startup "gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
 //  spawn-at-startup "pikabar"
-spawn-sh-at-startup "dms run"
+// spawn-sh-at-startup "dms run"
 
 environment {
     LD_PRELOAD ""
