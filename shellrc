@@ -65,7 +65,8 @@ if ! has_cmd bat && has_cmd batcat; then
 fi
 
 alias ls="eza --icons --group-directories-first"
-alias fd='fd-find'
+has_cmd fd-find && alias fd='fd-find'
+has_cmd fdfind && alias fd="fdfind"
 
 jupyter-lab() {
     cd ~/jupyter-lab || {
@@ -73,6 +74,14 @@ jupyter-lab() {
         return
     }
     .venv/bin/jupyter lab
+}
+
+uv-jupyter-standalone() {
+    uv tool run jupyter lab
+}
+
+uv-marimo-standalone() {
+    uvx marimo edit --sandbox
 }
 
 if has_cmd mise; then
@@ -85,7 +94,9 @@ if ! has_cmd rustc; then
     [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 fi
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+if has_cmd /home/linuxbrew/.linuxbrew/bin/brew; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
 
 system_update() {
     pikman update && pikman upgrade

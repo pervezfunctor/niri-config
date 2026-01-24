@@ -68,6 +68,8 @@ alias utlp = systemctl --user stop
 alias utlr = systemctl --user restart
 alias utlg = systemctl --user list-units
 alias utlf = systemctl --user list-units --all --state=failed
+alias uv-jupyter-standalone = uv tool run jupyter lab
+alias uv-marimo-standalone = uvx marimo edit --sandbox
 
 let mise_path = $nu.default-config-dir | path join mise.nu
 ^mise activate nu | save $mise_path --force
