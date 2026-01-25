@@ -96,7 +96,7 @@ uv-jupyter-standalone() {
 }
 
 uv-marimo-standalone() {
-    uvx marimo edit --sandbox
+    uvx --with pyzmq --from "marimo[sandbox]" marimo edit --sandbox
 }
 
 if has_cmd mise; then

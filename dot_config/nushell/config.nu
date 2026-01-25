@@ -42,3 +42,11 @@ if ($nu.default-config-dir | path join zoxide.nu | path exists) {
 def has_cmd [ app: string ] {
     (which $app | is-not-empty)
 }
+
+def uv-marimo-standalone [] {
+    uvx --with pyzmq --from "marimo[sandbox]" marimo edit --sandbox
+}
+
+def uv-jupyter-standalone [] {
+    uv tool run jupyter lab
+}
