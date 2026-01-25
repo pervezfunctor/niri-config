@@ -295,3 +295,5 @@ binds {
     Mod+Shift+F { spawn "nemo"; }
     Mod+Shift+B { spawn "chromium" ; }
 }
+
+include "dms/cursor.kdl"
