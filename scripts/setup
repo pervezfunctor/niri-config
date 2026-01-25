@@ -109,6 +109,12 @@ flatpaks_install() {
     done
 }
 
+dms_setup() {
+    mkdir -p ~/.config/niri/dms ~/.config/mango/dms
+    touch ~/.config/niri/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
+    touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
+}
+
 system_packages_install() {
     local -a packages=(
         cmake
@@ -207,6 +213,7 @@ system_packages_install() {
     has_cmd starship || pixi global install starship
 
     pipx install pywal pywalfox
+
 }
 
 emacs_install() {
@@ -290,6 +297,7 @@ dotfiles_install() {
     bashrc_setup
     nushell_setup
     astro_install
+    dms_setup
 }
 
 devtools_install() {
