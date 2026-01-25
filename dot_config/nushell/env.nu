@@ -9,9 +9,6 @@ if ("~/.local/bin/mise" | path expand | path exists) {
     mise activate nu | save --force $mise_path
 }
 
-starship init nu | save -f ($nu.default-config-dir | path join starship.nu)
-zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)
-
 alias c = code
 alias g = git
 alias h = btm
@@ -71,7 +68,8 @@ alias utlf = systemctl --user list-units --all --state=failed
 alias uv-jupyter-standalone = uv tool run jupyter lab
 alias uv-marimo-standalone = uvx marimo edit --sandbox
 
-let mise_path = $nu.default-config-dir | path join mise.nu
-^mise activate nu | save $mise_path --force
+const auto_includes = $nu.default-config-dir | path join auto-includes.nu
 
-nu ($nu.default-config-dir | path join generate-includes.nu)
+if not ($auto_includes | path exists) {
+    ^$"($nu.default-config-dir | path join nushell-sources.nu)"
+}
