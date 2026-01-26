@@ -15,26 +15,20 @@ layout {
         proportion 1.0
     }
 
-    focus-ring {
-        off
-    }
-
-    background-color "transparent"
-
     default-column-width { proportion 0.5; }
 
-    border {
-        width 2
-        active-gradient from="#0DB7D4" to="#9778D0" angle=90
-        inactive-color "#04404A"
-    }
-
-    struts {
-        left 2
-        right 2
-        top 2
-        bottom 2
-    }
+    //    border {
+    //        width 2
+    //        active-gradient from="#0DB7D4" to="#9778D0" angle=90
+    //        inactive-color "#04404A"
+    //    }
+    //
+    //    struts {
+    //        left 2
+    //        right 2
+    //        top 2
+    //        bottom 2
+    //    }
 }
 
 layer-rule {
