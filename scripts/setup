@@ -10,19 +10,19 @@ dir_exists() {
 
 is_pikaos() {
     # shellcheck disable=SC1091
-    . /etc/os-release && [ "$ID" = "pika" ]
+    [ -f /etc/os-release ] && grep -q 'pika' /etc/os-release 2>/dev/null
 }
 
 is_trixie() {
-    grep -qi 'trixie' /etc/os-release /etc/debian_version 2>/dev/null
+    [ -f /etc/os-release ] && grep -qi 'trixie' /etc/os-release 2>/dev/null
 }
 
 is_questing() {
-    grep -qi 'questing' /etc/os-release /etc/debian_version 2>/dev/null
+    [ -f /etc/os-release ] && grep -qi 'questing' /etc/os-release 2>/dev/null
 }
 
 is_fedora() {
-    grep -q -i 'Fedora' /etc/redhat-release
+    [ -f /etc/redhat-release ] && grep -q -i 'Fedora' /etc/redhat-release
 }
 
 prompt_yn() {
@@ -171,11 +171,11 @@ niri_install() {
         sudo apt install -y niri dms
     elif is_fedora; then
         sudo dnf copr enable avengemedia/dms
-        systemctl --user add-wants niri.service dms
     else
         error "OS not supported. Not installing niri."
         return 1
     fi
+    systemctl --user add-wants niri.service dms || true
 }
 
 si() {
@@ -245,15 +245,13 @@ system_install() {
         zig
     )
     local -a fedora_pkgs=(
-        niri
-        dms
         sddm
         sddm-themes
         nu
     )
 
     if is_trixie || is_pikaos || is_questing; then
-        log "Installing essential packages"
+        log "Installing system packages"
         si "${common_pkgs[@]}" "${apt_pkgs[@]}"
     fi
 
@@ -313,8 +311,11 @@ shell_install() {
 
 emacs_install() {
     log "Installing emacs"
-    has_cmd pikman && pikman --arch install emacs
-    has_cmd dnf && sudo dnf install -y emacs
+    if has_cmd pikman; then
+        pikman --arch install emacs
+    else
+        si emacs
+    fi
     git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
     ∙ ~/.config/emacs/bin/doom install
 }
@@ -463,16 +464,22 @@ zed_install() {
 
 whiptail_choices() {
     local -a whiptail_items=(
-        "system" "Install essential packages" "on"
+        "system" "Install system packages" "on"
         "shell" "Install shell packages" "on"
-        "devtools" "Install devtools(vscode, node etc)" "on"
+        "devtools" "Install devtools(vscode, mise, node etc)" "on"
         "dotfiles" "Setup dotfiles with chezmoi" "on"
         "flatpaks" "Install flatpaks" "on"
         "virt" "Install virtualization packages" "off"
-        "mangowc" "Install mangowc" "off"
         "zed" "Install zed" "off"
         "emacs" "Setup emacs" "off"
     )
+
+    if is_fedora || is_questing; then
+        whiptail_items+=("niri" "Install niri" "off")
+    fi
+    if is_fedora || is_pikaos; then
+        whiptail_items+=("mangowc" "Install mangowc" "off")
+    fi
 
     local selected_output
     selected_output=$(whiptail --checklist "Select tasks to execute:" 25 60 19 "${whiptail_items[@]}" 3>&1 1>&2 2>&3)
@@ -502,15 +509,21 @@ whiptail_choices() {
 }
 
 prompts() {
-    prompt_yn "Do you want to install essential packages?" && system_install
+    prompt_yn "Do you want to install system packages?" && system_install
     prompt_yn "Do you want to install shell packages?" && shell_install
     prompt_yn "Do you want to setup devtools?" && devtools_install
     prompt_yn "Do you want to setup dotfiles with chezmoi?" && dotfiles_install
     prompt_yn "Do you want to install flatpaks?" && flatpaks_install
     prompt_yn "Do you want to install virtualization packages?" && virt_install
-    prompt_yn "Do you want to setup mangowc?" && mangowc_install
     prompt_yn "Do you want to install zed?" && zed_install
     prompt_yn "Do you want to setup emacs?" && emacs_install
+
+    if is_fedora || is_questing; then
+        prompt_yn "Do you want to install niri?" && niri_install
+    fi
+    if is_fedora || is_pikaos; then
+        prompt_yn "Do you want to setup mangowc?" && mangowc_install
+    fi
 }
 
 main() {
