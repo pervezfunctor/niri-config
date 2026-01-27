@@ -4,5 +4,3 @@ spawn-sh-at-startup "gnome-keyring-daemon --start --components=pkcs11,secrets,ss
 
 // spawn-at-startup "swww-daemon"
 //  spawn-at-startup "pikabar"
-// spawn-sh-at-startup "dms run"
-// spawn-at-startup "systemctl" "--user" "enable" "--now" "hypridle"

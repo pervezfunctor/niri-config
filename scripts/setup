@@ -64,6 +64,15 @@ die() {
     exit 1
 }
 
+keep_sudo_alive() {
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+}
+
 snapper_setup() {
     if sudo snapper list-configs | grep -q "/"; then
         log "Snapper is already setup for /"
@@ -82,6 +91,9 @@ brew_install() {
     log "Installing brew"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+    brew tap ublue-os/tap
+    brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
 }
 
 mangowc_install() {
@@ -93,7 +105,7 @@ mangowc_install() {
         sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
         sudo dnf install -y mangowc
     else
-        error "Unsupported distro"
+        error "Unsupported OS. Not installing mangowc."
         return 1
     fi
 }
@@ -113,11 +125,12 @@ flatpaks_install() {
         com.github.tchx84.Flatseal
         sh.loft.devpod
         org.gnome.Papers
+        io.github.kolunmi.Bazaar
     )
 
     log "Installing flatpaks(vscode etc)"
     for pkg in "${flatpaks[@]}"; do
-        flatpak install -y --user flathub "$pkg"
+        flatpak --user install -y flathub "$pkg"
     done
 }
 
@@ -127,23 +140,84 @@ dms_setup() {
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
 }
 
-system_packages_install() {
+update_packages() {
+    log "Updating packages"
+
+    if is_pikaos; then
+        pikman update && pikman upgrade
+    elif is_fedora; then
+        sudo dnf update -y
+    elif is_trixie || is_questing; then
+        sudo apt update && sudo apt upgrade -y
+    else
+        error "OS not supported. Quitting."
+        exit 1
+    fi
+}
+
+niri_install() {
+    has_cmd niri && {
+        log "niri is already installed"
+        return
+    }
+
+    if is_pikaos; then
+        pikman install pika-niri-desktop-minimal pika-niri-settings
+    elif is_fedora; then
+        sudo dnf install -y niri
+    elif is_questing; then
+        sudo add-apt-repository ppa:avengemedia/danklinux
+        sudo add-apt-repository ppa:avengemedia/dms
+        sudo apt install -y niri dms
+    elif is_fedora; then
+        sudo dnf copr enable avengemedia/dms
+        systemctl --user add-wants niri.service dms
+    else
+        error "OS not supported. Not installing niri."
+        return 1
+    fi
+}
+
+si() {
+    if is_fedora; then
+        sudo apt install -y "$@"
+    elif is_trixie || is_questing; then
+        sudo apt install -y "$@"
+    elif is_pikaos; then
+        pikman install "$@"
+    else
+        error "OS not supported. Not installing $*."
+        return 1
+    fi
+}
+
+virt_install() {
+    local -a packages=(
+        podman
+        distrobox
+        virt-manager
+        incus
+    )
+    si "${packages[@]}"
+}
+
+system_install() {
+    update_packages
+
     local -a common_pkgs=(
         cmake
-        distrobox
         flatpak
         g++
         gcc
         git
         gnome-keyring
-        incus
         luarocks
         make
         micro
         mpv
         pass
         pipx
-        podman
+        plocate
         qt5ct
         qt6ct
         rclone
@@ -154,7 +228,6 @@ system_packages_install() {
         trash-cli
         tree
         unzip
-        virt-manager
         zsh
         zstd
     )
@@ -167,41 +240,37 @@ system_packages_install() {
     local -a pika_pkgs=(
         snapper-gui
         nushell
-        hypridle
         pika-refind-btrfs-hooks
         refind-btrfs
         zig
     )
+    local -a fedora_pkgs=(
+        niri
+        dms
+        sddm
+        sddm-themes
+        nu
+    )
 
     if is_trixie || is_pikaos || is_questing; then
-        log "Updating packages"
-        sudo apt update && sudo apt upgrade -y
         log "Installing essential packages"
-        sudo add-apt-repository ppa:avengemedia/danklinux
-        sudo add-apt-repository ppa:avengemedia/dms
-        sudo apt install -y "${common_pkgs[@]}" "${apt_pkgs[@]}" niri dms
+        si "${common_pkgs[@]}" "${apt_pkgs[@]}"
     fi
 
     if is_pikaos; then
-        sudo apt install -y "${pika_pkgs[@]}"
+        si "${pika_pkgs[@]}"
         snapper_setup
     elif is_fedora; then
-        sudo dnf update -y
-        sudo dnf copr enable avengemedia/dms
-        sudo dnf copr enable solopasha/hyprland
-        sudo dnf install -y "${common_pkgs[@]}"
-        sudo dnf install -y niri dms sddm sddm-themes nu hypridle
-        systemctl --user add-wants niri.service dms
-    else
-        error "Unknown OS. Not installing packages."
+        sudo dnf install -y "${common_pkgs[@]}" "${fedora_pkgs[@]}"
     fi
+    pipx install pywal pywalfox
 
     incus_setup
-    flatpaks_install
+    log "Updating locate database, this may take a while..."
+    sudo updatedb
+}
 
-    brew_install
-    brew tap ublue-os/tap
-    brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
+pixi_install() {
     brew install pixi
 
     local -a pixi_pkgs=(
@@ -225,6 +294,7 @@ system_packages_install() {
         mask
         ripgrep
         shellcheck
+        tealdeer
         television
         xh
         yazi
@@ -233,9 +303,12 @@ system_packages_install() {
 
     pixi global install "${pixi_pkgs[@]}"
     has_cmd starship || pixi global install starship
+    tldr --update
+}
 
-    pipx install pywal pywalfox
-
+shell_install() {
+    brew_install
+    pixi_install
 }
 
 emacs_install() {
@@ -345,7 +418,8 @@ devtools_install() {
     done
 
     eval "$(~/.local/bin/mise activate bash)"
-    mise use -g node@latest
+    mise use -g node@latest pnpm
+    pnpm setup
 
     local -a npm_pkgs=(
         @mermaid-js/mermaid-cli
@@ -354,7 +428,7 @@ devtools_install() {
     )
     for pkg in "${npm_pkgs[@]}"; do
         log "Installing $pkg"
-        npm install -g "$pkg"
+        pnpm install -g "$pkg"
     done
 
     dir_exists ~/jupyter-lab || {
@@ -373,6 +447,10 @@ devtools_install() {
     rust_install
 }
 
+motltbot_install() {
+    curl -fsSL https://molt.bot/install.sh | bash
+}
+
 zed_install() {
     has_cmd zed && {
         log "zed is already installed"
@@ -385,9 +463,12 @@ zed_install() {
 
 whiptail_choices() {
     local -a whiptail_items=(
-        "system_packages" "Install essential packages" "on"
+        "system" "Install essential packages" "on"
+        "shell" "Install shell packages" "on"
         "devtools" "Install devtools(vscode, node etc)" "on"
         "dotfiles" "Setup dotfiles with chezmoi" "on"
+        "flatpaks" "Install flatpaks" "on"
+        "virt" "Install virtualization packages" "off"
         "mangowc" "Install mangowc" "off"
         "zed" "Install zed" "off"
         "emacs" "Setup emacs" "off"
@@ -421,16 +502,20 @@ whiptail_choices() {
 }
 
 prompts() {
-    prompt_yn "Do you want to install essential packages?" && system_packages_install
+    prompt_yn "Do you want to install essential packages?" && system_install
+    prompt_yn "Do you want to install shell packages?" && shell_install
     prompt_yn "Do you want to setup devtools?" && devtools_install
     prompt_yn "Do you want to setup dotfiles with chezmoi?" && dotfiles_install
+    prompt_yn "Do you want to install flatpaks?" && flatpaks_install
+    prompt_yn "Do you want to install virtualization packages?" && virt_install
     prompt_yn "Do you want to setup mangowc?" && mangowc_install
     prompt_yn "Do you want to install zed?" && zed_install
     prompt_yn "Do you want to setup emacs?" && emacs_install
-    prompt_yn "Do you want to setup dotfiles with chezmoi?" && dotfiles_install
 }
 
 main() {
+    keep_sudo_alive
+
     is_pikaos || is_fedora || {
         error "This script is only meant to be run on PikaOS/Fedora"
         return 1
