@@ -45,17 +45,23 @@ prompt_yn() {
 }
 
 log() {
-    echo -e "\033[0;32m→ $1\033[0m"
+    local msg="$1"
+    echo -e "\033[0;32m→ $msg\033[0m"
+    echo "→ $msg" >>"${LOG_FILE:-$HOME/.niri-config-log.log}"
     sleep 0.5
 }
 
 warn() {
-    echo -e "\033[0;33m! $1\033[0m"
+    local msg="$1"
+    echo -e "\033[0;33m! $msg\033[0m"
+    echo "! $msg" >>"${LOG_FILE:-$HOME/.niri-config-warn.log}"
     sleep 0.2
 }
 
 error() {
-    echo -e "\033[0;31m✗ $1\033[0m"
+    local msg="$1"
+    echo -e "\033[0;31m✗ $msg\033[0m"
+    echo "✗ $msg" >>"${LOG_FILE:-$HOME/.niri-config-error.log}"
     sleep 0.2
 }
 
@@ -301,7 +307,7 @@ pixi_install() {
 
     pixi global install "${pixi_pkgs[@]}"
     has_cmd starship || pixi global install starship
-    tldr --update
+    ~/.pixi/bin/tldr --update
 }
 
 shell_install() {
@@ -527,6 +533,10 @@ prompts() {
 }
 
 main() {
+    rm -f "$HOME"/.niri-config-*.log
+
+    export LOG_FILE="${HOME}/.setup.log"
+    : >"$LOG_FILE" # Clear log file
     keep_sudo_alive
 
     is_pikaos || is_fedora || {
@@ -534,7 +544,7 @@ main() {
         return 1
     }
 
-    export PATH="/home/linuxbrew/.linuxbrew/bin:$HOME/bin:$HOME/.local/bin:$PATH"
+    export PATH="/home/linuxbrew/.linuxbrew/bin:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$PATH"
 
     mkdir -p ~/Pictures/Screenshots
 
