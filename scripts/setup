@@ -47,21 +47,21 @@ prompt_yn() {
 log() {
     local msg="$1"
     echo -e "\033[0;32m→ $msg\033[0m"
-    echo "→ $msg" >>"${LOG_FILE:-$HOME/.niri-config-log.log}"
+    echo "→ $msg" >>"$HOME/.niri-config-log.log"
     sleep 0.5
 }
 
 warn() {
     local msg="$1"
     echo -e "\033[0;33m! $msg\033[0m"
-    echo "! $msg" >>"${LOG_FILE:-$HOME/.niri-config-warn.log}"
+    echo "! $msg" >>"$HOME/.niri-config-warn.log"
     sleep 0.2
 }
 
 error() {
     local msg="$1"
     echo -e "\033[0;31m✗ $msg\033[0m"
-    echo "✗ $msg" >>"${LOG_FILE:-$HOME/.niri-config-error.log}"
+    echo "✗ $msg" >>"$HOME/.niri-config-error.log"
     sleep 0.2
 }
 
@@ -534,9 +534,6 @@ prompts() {
 
 main() {
     rm -f "$HOME"/.niri-config-*.log
-
-    export LOG_FILE="${HOME}/.setup.log"
-    : >"$LOG_FILE" # Clear log file
     keep_sudo_alive
 
     is_pikaos || is_fedora || {
