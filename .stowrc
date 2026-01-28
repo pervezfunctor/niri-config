@@ -1,0 +1,4 @@
+-d ~/niri-config
+--dotfiles
+-t ~/
+
