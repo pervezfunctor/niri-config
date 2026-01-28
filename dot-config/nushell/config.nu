@@ -37,3 +37,7 @@ def uv-jupyter-standalone [] {
 
 source ($nu.default-config-dir | path join auto-includes.nu)
 source ($nu.default-config-dir | path join aliases.nu)
+
+def reinit [] {
+    ^$"($nu.default-config-dir | path join nushell-sources.nu)"
+}

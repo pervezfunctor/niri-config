@@ -1,27 +1,25 @@
 #!/usr/bin/env nu
 
 def main [--verbose (-v)] {
-    let optional_configs = [
+    let file_configs = [
         "~/.config/nushell/work.nu"
         "~/.config/nushell/personal.nu"
         "~/.config/nushell/secrets.nu"
-        "~/.local/share/pnpm"
     ]
 
     let tools = [
         [name, command];
         [starship, {|| starship init nu }],
         [zoxide, {|| zoxide init nushell }],
-        [carapace, {|| carapace init nu }],
-        [mise, {|| ^mise activate nu }]
+        [mise, {|| ^mise activate nu }],
+        [carapace, {|| carapace _carapace nushell }]
     ]
 
     def vprint [message] {
-        if $verbose { print $"\n$message"}
+        if $verbose { print $"$message\n" }
     }
 
     vprint "Generating tool configs..."
-
 
     let tool_sources = $tools | each { |tool|
         let output_file = $nu.default-config-dir | path join $"($tool.name).nu"
@@ -37,9 +35,9 @@ def main [--verbose (-v)] {
         }
     }
 
-    vprint "\nGenerating conditional includes..."
+    vprint "Generating conditional includes..."
 
-    let config_sources = $optional_configs
+    let config_sources = $file_configs
         | each { |f| $f | path expand }
         | where { |f| $f | path exists }
         | each { |f|
@@ -50,5 +48,5 @@ def main [--verbose (-v)] {
     let all_sources = $tool_sources | append $config_sources | str join "\n"
     let includes_file = $nu.default-config-dir | path join auto-includes.nu
     $all_sources | save -f $includes_file
-    vprint $"\n✓ Generated ($includes_file) with all includes"
+    vprint $"✓ Generated ($includes_file) with all includes"
 }
