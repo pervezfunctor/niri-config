@@ -1,6 +1,30 @@
-## Niri Setup for developers on PikaOS/Fedora
+# Niri Setup for developers on PikaOS/Fedora
 
-Use the following script and what you need. You MUST select at least system packages on first run. You could run the script multiple times to select different options.
+`dotfiles` from this repository can be used to setup development workstation using `niri` as your window manager.
+
+## Operating Systems Supported
+
+### PikaOS
+
+I currently use this setup on [PikaOS](https://wiki.pika-os.com/en/home). PikaOS is a rolling release distro based on Debian Sid. I replace `pikabar` and related utilites with [dms](https://danklinux.com/).
+
+### Fedora OS
+
+Setup script can optionally install `niri` and `dms` on Fedora. This is the secondary OS I use fairly regularly. You could install Fedora using any of it's official variants, something like sway should work fine too. I use `Fedora Everything to install basic system software and use script from this repository to setup niri.
+
+### Ubuntu Questing(25.04)
+
+I don't use Ubuntu. Even though I believe this should work fine, this setup might not work currently. I would recommend you to either use Fedora or PikaOS.
+
+
+### NixOS
+
+If you are using NixOS, use my [nixos-config](https://github.com/pervezfunctor/nixos-config) repository.
+
+
+## Setup
+
+Use the following script and select what you need. You MUST select at least system packages and dotfiles on the first run. You could run this script multiple times to select different options.
 
 ```bash
 bash -c "$(curl -sSL https://raw.githubusercontent.com/pervezfunctor/niri-config/refs/heads/master/scripts/setup)"
@@ -9,7 +33,7 @@ bash -c "$(curl -sSL https://raw.githubusercontent.com/pervezfunctor/niri-config
 If you need docker run the following script to install docker inside a VM and use `devpod` for development.
 
 ```bash
-~/.local/share/chezmoi/scripts/docker-vm
+~/niri-config/scripts/docker-vm
 ```
 
 If you wish to install additional packages, first see if you operating system package manager has it. For eg.
