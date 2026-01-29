@@ -172,6 +172,7 @@ dms_setup() {
     mkdir -p ~/.config/niri/dms ~/.config/mango/dms
     touch ~/.config/niri/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
+    touch ~/.config/hypr/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
 }
 
 update_packages() {
