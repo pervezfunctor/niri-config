@@ -14,7 +14,7 @@
     "editor.minimap.enabled": false,
     "update.mode": "manual",
     "git.autofetch": true,
-    "workbench.colorTheme": "Gruvbox Dark Medium",
+    "workbench.colorTheme": "Dynamic Base16 DankShell",
     "bashIde.shellcheckPath": "shellcheck",
     "bashIde.shfmt.path": "shfmt",
     "docker.extension.enableComposeLanguageServer": false,
