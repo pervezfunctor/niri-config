@@ -111,6 +111,10 @@ brew_install() {
 }
 
 mangowc_install() {
+    has_cmd mango && {
+        log "mangowc is already installed"
+        return
+    }
     log "Installing mangowc"
 
     if is_pikaos; then
@@ -125,6 +129,19 @@ mangowc_install() {
         stow --adopt mangowc
         git stash --include-untracked --message "Stashing mangowc dotfiles" || true
     }
+}
+
+hyprland_install() {
+    has_cmd hyprctl && {
+        log "hyprland is already installed"
+        return
+    }
+    log "Installing hyprland"
+    if is_pikaos; then
+        pikman install pika-hyprland-desktop-minimal
+    else
+        error "Unsupported OS. Not installing hyprland."
+    fi
 }
 
 incus_setup() {
