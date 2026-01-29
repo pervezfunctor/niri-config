@@ -26,12 +26,13 @@
     in
     {
       homeConfigurations = {
-        "${vars.username}" = home-manager.lib.homeConfiguration {
-          inherit system;
-          specialArgs = { inherit inputs vars; };
-          imports = [
+        "${vars.username}" = home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          modules = [
             ./dev.nix
+            ./packages.nix
           ];
+          extraSpecialArgs = { inherit inputs vars; };
         };
       };
     };
