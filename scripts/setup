@@ -362,11 +362,15 @@ rust_install() {
 }
 
 nushell_setup() {
-    is_pikaos && return
-
-    log "Setting up nushell"
-    grep -q "nushell" /etc/shells || {
-        echo "/usr/bin/nu" | sudo tee -a /etc/shells
+    if ! is_pikaos; then
+        log "Setting up nushell"
+        grep -q "nushell" /etc/shells || {
+            echo "/usr/bin/nu" | sudo tee -a /etc/shells
+        }
+    fi
+    cd ~/niri-config && {
+        stow --adopt nushell
+        git stash --include-untracked --message "Stashing nushell dotfiles" || true
     }
 }
 
@@ -423,8 +427,8 @@ dotfiles_install() {
     mv ~/niri-config ~/niri-config.bak 2>/dev/null || true
     git clone --depth 1 https://github.com/pervezfunctor/niri-config.git ~/niri-config
     cd ~/niri-config && {
-        stow --adopt kitty
-        git stash --include-untracked --message "Stashing kitty dotfiles" || true
+        stow --adopt kitty zsh
+        git stash --include-untracked --message "Stashing kitty,zsh dotfiles" || true
     }
 
     zshrc_setup
