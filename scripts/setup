@@ -79,6 +79,7 @@ die() {
 }
 
 keep_sudo_alive() {
+    log "Keeping sudo alive"
     sudo -v
     while true; do
         sudo -n true
@@ -93,6 +94,7 @@ snapper_setup() {
         return
     fi
 
+    log "Setting up snapper"
     sudo snapper create-config /
     sudo mkdir -p /var/lib/refind-btrfs
     sudo chmod 755 /var/lib/refind-btrfs
@@ -106,6 +108,7 @@ brew_install() {
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
+    log "Installing fonts"
     brew tap ublue-os/tap
     brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
 }
@@ -115,8 +118,8 @@ mangowc_install() {
         log "mangowc is already installed"
         return
     }
-    log "Installing mangowc"
 
+    log "Installing mangowc"
     if is_pikaos; then
         pikman install mangowc
     elif is_fedora && prompt_yn "need terra repository for installing mango. This is NOT stable. Still enable it?"; then
@@ -126,6 +129,7 @@ mangowc_install() {
         error "Unsupported OS. Not installing mangowc."
     fi
     cd ~/niri-config && {
+        log "Stowing mangowc dotfiles"
         stow --adopt mangowc
         git stash --include-untracked --message "Stashing mangowc dotfiles" || true
     }
@@ -136,9 +140,10 @@ hyprland_install() {
         log "hyprland is already installed"
         return
     }
+
     log "Installing hyprland"
     if is_pikaos; then
-        pikman install pika-hyprland-desktop-minimal
+        pikman install pika-hyprland-desktop-minimal pika-hyprland-settings
     else
         error "Unsupported OS. Not installing hyprland."
     fi
@@ -153,6 +158,7 @@ incus_setup() {
 }
 
 flatpaks_install() {
+    log "Adding flathub remote"
     flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo --user
 
     local -a flatpaks=(
@@ -169,6 +175,7 @@ flatpaks_install() {
 }
 
 dms_setup() {
+    log "Setting up dms"
     mkdir -p ~/.config/niri/dms ~/.config/mango/dms
     touch ~/.config/niri/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
@@ -191,6 +198,7 @@ update_packages() {
 }
 
 niri_install() {
+    log "Installing niri"
     if ! has_cmd niri; then
         if is_pikaos; then
             pikman install pika-niri-desktop-minimal pika-niri-settings
@@ -209,12 +217,14 @@ niri_install() {
     fi
     systemctl --user add-wants niri.service dms || true
     cd ~/niri-config && {
+        log "Stowing niri dotfiles"
         stow --adopt niri
         git stash --include-untracked --message "Stashing niri dotfiles" || true
     }
 }
 
 si() {
+    log "Installing $*"
     if is_fedora; then
         sudo apt install -y "$@"
     elif is_trixie || is_questing; then
@@ -228,6 +238,7 @@ si() {
 }
 
 virt_install() {
+    log "Installing virtualization packages(distrobox, virt-manager, incus)"
     local -a packages=(
         podman
         distrobox
@@ -248,6 +259,8 @@ nix_install() {
     curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --determinate --no-confirm
     # shellcheck disable=SC1091
     source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+
+    log "Setting up home-manager"
     nix run home-manager -- switch --flake ~/niri-config/home-manager\#"$USER" --impure
 }
 
@@ -300,8 +313,8 @@ system_install() {
         nu
     )
 
+    log "Installing system packages"
     if is_trixie || is_pikaos || is_questing; then
-        log "Installing system packages"
         si "${common_pkgs[@]}" "${apt_pkgs[@]}"
     fi
 
@@ -312,6 +325,8 @@ system_install() {
         sudo dnf install -y "${common_pkgs[@]}" "${fedora_pkgs[@]}"
         systemctl --user disable waybar.service || true
     fi
+
+    log "Installing pywal packages"
     pipx install pywal pywalfox
 
     log "Updating locate database, this may take a while..."
@@ -319,6 +334,8 @@ system_install() {
 }
 
 pixi_install() {
+    log "Installing pixi and shell tools with pixi"
+
     brew install pixi
 
     local -a pixi_pkgs=(
@@ -366,6 +383,8 @@ emacs_install() {
     else
         si emacs
     fi
+
+    log "Installing doomemacs"
     git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
     ∙ ~/.config/emacs/bin/doom install
 }
@@ -376,6 +395,7 @@ rust_install() {
         return
     }
 
+    log "Installing rustup"
     curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh
 }
 
@@ -387,6 +407,7 @@ nushell_setup() {
         }
     fi
     cd ~/niri-config && {
+        log "Stowing nushell dotfiles"
         stow --adopt nushell
         git stash --include-untracked --message "Stashing nushell dotfiles" || true
     }
@@ -412,6 +433,7 @@ astro_install() {
         prompt_yn "Found existing nvim config. Do you want to trash and replace with AstroNvim?" || return 0
     fi
 
+    log "Installing AstroNvim"
     trash ~/.config/nvim.bak || true
     mv ~/.config/nvim ~/.config/nvim.bak 2>/dev/null || true
     mkdir ~/.config/nvim 2>/dev/null || true
@@ -461,6 +483,8 @@ devtools_install() {
         curl https://mise.run | sh
     }
 
+    log "Installing devtools(mise, neovim, vscode etc)"
+
     brew install uv mise neovim
     brew install --cask visual-studio-code-linux
 
@@ -478,11 +502,13 @@ devtools_install() {
         code --install-extension "$ext"
     done
     cd ~/niri-config && {
+        log "Stowing vscode dotfiles"
         stow --adopt vscode
         git stash --include-untracked --message "Stashing vscode dotfiles" || true
     }
 
     eval "$(~/.local/bin/mise activate bash)"
+    log "Installing pnpm"
     mise use -g node@latest pnpm
     pnpm setup
 
@@ -491,12 +517,15 @@ devtools_install() {
         @google/gemini-cli
         opencode-ai
     )
+
+    log "Installing pnpm packages"
     for pkg in "${npm_pkgs[@]}"; do
         log "Installing $pkg"
         pnpm install -g "$pkg"
     done
 
     dir_exists ~/jupyter-lab || {
+        log "Setting up jupyter-lab"
         mkdir -p ~/jupyter-lab
         cd ~/jupyter-lab || {
             error "Failed to change to jupyter-lab directory"
@@ -507,12 +536,14 @@ devtools_install() {
         uv pip install jupyterlab
     }
 
+    log "Installing claude"
     has_cmd claude || curl -fsSL https://claude.ai/install.sh | bash
     devpod_install
     rust_install
 }
 
 motltbot_install() {
+    log "Installing moltbot"
     curl -fsSL https://molt.bot/install.sh | bash
 }
 
@@ -526,6 +557,7 @@ zed_install() {
     curl -f https://zed.dev/install.sh | sh
 
     cd ~/niri-config && {
+        log "Stowing zed dotfiles"
         stow --adopt zed
         git stash --include-untracked --message "Stashing zed dotfiles" || true
     }
@@ -537,7 +569,7 @@ whiptail_choices() {
         "dotfiles" "Setup dotfiles with stow" "on"
         "shell" "Install shell tools" "on"
         "devtools" "Install devtools(vscode, mise etc)" "on"
-        "flatpaks" "Install flatpaks(devpod, pdfreader etc)" "on"
+        "flatpaks" "Install flatpaks(devpod etc)" "on"
         "virt" "Install virtualization packages" "off"
         "zed" "Install zed" "off"
         "emacs" "Setup emacs" "off"
@@ -562,7 +594,6 @@ whiptail_choices() {
 
     local -a selected_tasks=()
     if [ -n "$selected_output" ]; then
-        # Parse space-separated quoted items from whiptail output
         read -ra selected_tasks <<<"$selected_output"
     fi
 
@@ -608,7 +639,7 @@ main() {
 
     export PATH="/home/linuxbrew/.linuxbrew/bin:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
 
-    mkdir -p ~/Pictures/Screenshots
+    mkdir -p ~/Pictures/Screenshots ~/Pictures/Wallpapers
 
     if is_mac; then
         shell_install
