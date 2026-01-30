@@ -176,7 +176,7 @@ flatpaks_install() {
 
 dms_setup() {
     log "Setting up dms"
-    mkdir -p ~/.config/niri/dms ~/.config/mango/dms
+    mkdir -p ~/.config/niri/dms ~/.config/mango/dms ~/.config/hypr/dms
     touch ~/.config/niri/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
     touch ~/.config/hypr/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
@@ -471,11 +471,11 @@ dotfiles_install() {
         git stash --include-untracked --message "Stashing kitty,zsh dotfiles" || true
     }
 
-    zshrc_setup
     bashrc_setup
     nushell_setup
     astro_install
     dms_setup
+    zshrc_setup
 }
 
 devtools_install() {

@@ -31,7 +31,7 @@ If you are using NixOS, use my [nixos-config](https://github.com/pervezfunctor/n
 Use the following script and select what you need. You MUST select at least system packages and dotfiles on the first run. You could run this script multiple times to select different options.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/pervezfunctor/niri-config/refs/heads/master/scripts/setup | bash
+bash -c "$(curl -sSL https://raw.githubusercontent.com/pervezfunctor/niri-config/refs/heads/master/scripts/setup)"
 ```
 
 If you need docker run the following script to install docker inside a VM and use `devpod` for development.
