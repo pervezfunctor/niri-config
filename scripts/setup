@@ -576,7 +576,7 @@ whiptail_choices() {
         "nix" "Setup nix with home-manager" "off"
     )
 
-    if is_fedora || is_questing; then
+    if is_fedora || is_questing || is_pikaos; then
         whiptail_items+=("niri" "Install niri" "off")
     fi
     if is_fedora || is_pikaos; then
@@ -610,21 +610,21 @@ whiptail_choices() {
 }
 
 prompts() {
-    prompt_yn "Do you want to install system packages?" && system_install
-    prompt_yn "Do you want to setup dotfiles with stow?" && dotfiles_install
-    prompt_yn "Do you want to install shell tools?" && shell_install
-    prompt_yn "Do you want to setup devtools?" && devtools_install
-    prompt_yn "Do you want to install flatpaks(devpod etc)?" && flatpaks_install
-    prompt_yn "Do you want to install virtualization packages?" && virt_install
-    prompt_yn "Do you want to install zed?" && zed_install
-    prompt_yn "Do you want to setup emacs?" && emacs_install
-    prompt_yn "Do you want to setup nix with home-manager?" && nix_install
+    prompt_yn "Install system packages?" && system_install
+    prompt_yn "Setup dotfiles with stow?" && dotfiles_install
+    prompt_yn "Install shell tools?" && shell_install
+    prompt_yn "Setup devtools?" && devtools_install
+    prompt_yn "Install flatpaks(devpod etc)?" && flatpaks_install
+    prompt_yn "Install virtualization packages?" && virt_install
+    prompt_yn "Install zed?" && zed_install
+    prompt_yn "Setup emacs?" && emacs_install
+    prompt_yn "Setup nix with home-manager?" && nix_install
 
-    if is_fedora || is_questing; then
-        prompt_yn "Do you want to install niri?" && niri_install
+    if is_fedora || is_questing || is_pikaos; then
+        prompt_yn "Install niri?" && niri_install
     fi
     if is_fedora || is_pikaos; then
-        prompt_yn "Do you want to setup mangowc?" && mangowc_install
+        prompt_yn "Setup mangowc?" && mangowc_install
     fi
 }
 
