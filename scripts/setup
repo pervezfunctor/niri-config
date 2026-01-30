@@ -1,695 +1,724 @@
 #!/usr/bin/env bash
 
 has_cmd() {
-    command -v "$1" >/dev/null 2>&1
+  command -v "$1" >/dev/null 2>&1
 }
 
 dir_exists() {
-    [ -d "$1" ]
+  [ -d "$1" ]
 }
 
 is_pikaos() {
-    # shellcheck disable=SC1091
-    [ -f /etc/os-release ] && grep -q 'pika' /etc/os-release 2>/dev/null
+  # shellcheck disable=SC1091
+  [ -f /etc/os-release ] && grep -q 'pika' /etc/os-release 2>/dev/null
 }
 
 is_trixie() {
-    [ -f /etc/os-release ] && grep -qi 'trixie' /etc/os-release 2>/dev/null
+  [ -f /etc/os-release ] && grep -qi 'trixie' /etc/os-release 2>/dev/null
 }
 
 is_questing() {
-    [ -f /etc/os-release ] && grep -qi 'questing' /etc/os-release 2>/dev/null
+  [ -f /etc/os-release ] && grep -qi 'questing' /etc/os-release 2>/dev/null
 }
 
 is_fedora() {
-    [ -f /etc/redhat-release ] && grep -q -i 'Fedora' /etc/redhat-release
+  [ -f /etc/redhat-release ] && grep -q -i 'Fedora' /etc/redhat-release
 }
 
 is_linux() {
-    [ "$(uname -s)" = "Linux" ]
+  [ "$(uname -s)" = "Linux" ]
+}
+
+is_tw() {
+  [ -f /etc/os-release ] && grep -q 'Tumbleweed' /etc/os-release 2>/dev/null
 }
 
 is_mac() {
-    [ "$(uname -s)" = "Darwin" ]
+  [ "$(uname -s)" = "Darwin" ]
 }
 
 prompt_yn() {
-    local prompt="$1"
-    local response
-    while true; do
-        read -rp "\033[0;36m? $prompt\033[0m \033[0;33m[y/N]\033[0m " response
-        case "$response" in
-        [yY][eE][sS] | [yY])
-            return 0
-            ;;
-        [nN][oO] | [nN] | "")
-            return 1
-            ;;
-        *)
-            warn "Please answer yes or no."
-            ;;
-        esac
-    done
+  local prompt="$1"
+  local response
+  while true; do
+    read -rp "\033[0;36m? $prompt\033[0m \033[0;33m[y/N]\033[0m " response
+    case "$response" in
+    [yY][eE][sS] | [yY])
+      return 0
+      ;;
+    [nN][oO] | [nN] | "")
+      return 1
+      ;;
+    *)
+      warn "Please answer yes or no."
+      ;;
+    esac
+  done
 }
 
 log() {
-    local msg="$1"
-    echo -e "\033[0;32m→ $msg\033[0m"
-    echo "→ $msg" >>"$HOME/.niri-config-log.log"
-    sleep 0.5
+  local msg="$1"
+  echo -e "\033[0;32m→ $msg\033[0m"
+  echo "→ $msg" >>"$HOME/.niri-config-log.log"
+  sleep 0.5
 }
 
 warn() {
-    local msg="$1"
-    echo -e "\033[0;33m! $msg\033[0m"
-    echo "! $msg" >>"$HOME/.niri-config-warn.log"
-    sleep 0.2
+  local msg="$1"
+  echo -e "\033[0;33m! $msg\033[0m"
+  echo "! $msg" >>"$HOME/.niri-config-warn.log"
+  sleep 0.2
 }
 
 error() {
-    local msg="$1"
-    echo -e "\033[0;31m✗ $msg\033[0m"
-    echo "✗ $msg" >>"$HOME/.niri-config-error.log"
-    sleep 0.2
+  local msg="$1"
+  echo -e "\033[0;31m✗ $msg\033[0m"
+  echo "✗ $msg" >>"$HOME/.niri-config-error.log"
+  sleep 0.2
 }
 
 die() {
-    error "$1"
-    exit 1
+  error "$1"
+  exit 1
 }
 
 keep_sudo_alive() {
-    log "Keeping sudo alive"
-    sudo -v
-    while true; do
-        sudo -n true
-        sleep 60
-        kill -0 "$$" || exit
-    done 2>/dev/null &
+  log "Keeping sudo alive"
+  sudo -v
+  while true; do
+    sudo -n true
+    sleep 60
+    kill -0 "$$" || exit
+  done 2>/dev/null &
 }
 
 snapper_setup() {
-    if sudo snapper list-configs | grep -q "/"; then
-        log "Snapper is already setup for /"
-        return
-    fi
+  if sudo snapper list-configs | grep -q "/"; then
+    log "Snapper is already setup for /"
+    return
+  fi
 
-    log "Setting up snapper"
-    sudo snapper create-config /
-    sudo mkdir -p /var/lib/refind-btrfs
-    sudo chmod 755 /var/lib/refind-btrfs
-    sudo systemctl enable refind-btrfs --now
+  log "Setting up snapper"
+  sudo snapper create-config /
+  sudo mkdir -p /var/lib/refind-btrfs
+  sudo chmod 755 /var/lib/refind-btrfs
+  sudo systemctl enable refind-btrfs --now
 }
 
 brew_install() {
-    has_cmd brew && return
+  has_cmd brew && return
 
-    log "Installing brew"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  log "Installing brew"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
-    log "Installing fonts"
-    brew tap ublue-os/tap
-    brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
+  log "Installing fonts"
+  brew tap ublue-os/tap
+  brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
 }
 
 wm_install() {
-    local -a pkgs=(
-        cliphist
-        grim
-        mate-polkit
-        pipewire
-        pipewire-pulse
-        slurp
-        wireplumber
-        wl-clipboard
-        xdg-desktop-portal-gnome
-        xdg-desktop-portal-gtk
-        xdg-desktop-portal-wlr
-    )
+  local -a pkgs=(
+    cliphist
+    grim
+    mate-polkit
+    pipewire
+    pipewire-pulse
+    slurp
+    wireplumber
+    wl-clipboard
+    xdg-desktop-portal-gnome
+    xdg-desktop-portal-gtk
+    xdg-desktop-portal-wlr
+  )
 
-    si "${pkgs[@]}"
+  si "${pkgs[@]}"
+  is_tw && si pipewire-pulseaudio
 }
 
 niri_install() {
-    log "Installing niri"
-    if ! has_cmd niri; then
-        wm_install
-        if is_pikaos; then
-            pikman install pika-niri-desktop-minimal pika-niri-settings dms
-        elif is_fedora; then
-            sudo dnf copr enable avengemedia/dms
-            sudo dnf install -y niri dms
-        elif is_questing; then
-            sudo add-apt-repository ppa:avengemedia/danklinux
-            sudo add-apt-repository ppa:avengemedia/dms
-            sudo apt install -y niri dms
-        else
-            error "OS not supported. Not installing niri."
-            return 1
-        fi
+  log "Installing niri"
+  if ! has_cmd niri; then
+    wm_install
+    if is_pikaos; then
+      pikman install pika-niri-desktop-minimal pika-niri-settings dms
+    elif is_fedora; then
+      sudo dnf copr enable avengemedia/dms
+      sudo dnf install -y niri dms
+    elif is_questing; then
+      sudo add-apt-repository ppa:avengemedia/danklinux
+      sudo add-apt-repository ppa:avengemedia/dms
+      sudo apt install -y niri dms
+    elif is_tw; then
+      sudo zypper addrepo https://download.opensuse.org/repositories/home:/AvengeMedia:/dms/openSUSE_Tumbleweed/home:AvengeMedia:dms.repo
+      sudo zypper niri dms
+    else
+      error "OS not supported. Not installing niri."
+      return 1
     fi
+  fi
 
-    cd ~/niri-config && {
-        log "Stowing niri dotfiles"
-        stow --no-folding --adopt niri
-        git stash --include-untracked --message "Stashing niri dotfiles" || true
-        mkdir -p ~/.config/niri/dms
-        touch ~/.config/niri/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
-    }
+  cd ~/niri-config && {
+    log "Stowing niri dotfiles"
+    stow --no-folding --adopt niri
+    git stash --include-untracked --message "Stashing niri dotfiles" || true
+    mkdir -p ~/.config/niri/dms
+    touch ~/.config/niri/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.kdl
+  }
 
-    systemctl --user add-wants niri.service dms || true
+  systemctl --user add-wants niri.service dms || true
 }
 
 mangowc_install() {
-    if ! has_cmd mango; then
-        log "Installing mangowc"
-        wm_install
-        if is_pikaos; then
-            pikman install mangowc
-        elif is_fedora && prompt_yn "need terra repository for installing mango. This is NOT stable. Still enable it?"; then
-            sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
-            sudo dnf copr enable avengemedia/dms
-            sudo dnf install -y mangowc dms
-        else
-            error "Unsupported OS. Not installing mangowc."
-        fi
+  if ! has_cmd mango; then
+    log "Installing mangowc"
+    wm_install
+    if is_pikaos; then
+      pikman install mangowc
+    elif is_fedora && prompt_yn "need terra repository for installing mango. This is NOT stable. Still enable it?"; then
+      sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+      sudo dnf copr enable avengemedia/dms
+      sudo dnf install -y mangowc dms
+    else
+      error "Unsupported OS. Not installing mangowc."
     fi
+  fi
 
-    cd ~/niri-config && {
-        log "Stowing mangowc dotfiles"
-        stow --no-folding --adopt mangowc systemd
-        git stash --include-untracked --message "Stashing mangowc dotfiles" || true
-        mkdir -p ~/.config/mango/dms
-        touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
-    }
+  cd ~/niri-config && {
+    log "Stowing mangowc dotfiles"
+    stow --no-folding --adopt mangowc systemd
+    git stash --include-untracked --message "Stashing mangowc dotfiles" || true
+    mkdir -p ~/.config/mango/dms
+    touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
+  }
 
-    systemctl --user add-wants mango-session.target dms || true
+  systemctl --user add-wants mango-session.target dms || true
 }
 
 hyprland_install() {
-    if ! has_cmd hyprctl; then
-        log "Installing hyprland"
-        wm_install
-        if is_pikaos; then
-            pikman install pika-hyprland-desktop-minimal pika-hyprland-settings dms
-            pikman install hyprpolkitagent
-        elif is_fedora; then
-            sudo dnf copr enable solopasha/hyprland
-            sudo dnf copr enable avengemedia/dms
-            sudo dnf install -y hyprland dms
-            sudo dnf install -y hyprpolkitagent
-        else
-            error "Unsupported OS. Not installing hyprland."
-            return
-        fi
+  if ! has_cmd hyprctl; then
+    log "Installing hyprland"
+    wm_install
+    if is_pikaos; then
+      pikman install pika-hyprland-desktop-minimal pika-hyprland-settings dms
+      pikman install hyprpolkitagent
+    elif is_fedora; then
+      sudo dnf copr enable solopasha/hyprland
+      sudo dnf copr enable avengemedia/dms
+      sudo dnf install -y hyprland dms
+      sudo dnf install -y hyprpolkitagent
+    elif is_tw; then
+      sudo zypper addrepo https://download.opensuse.org/repositories/home:/AvengeMedia:/dms/openSUSE_Tumbleweed/home:AvengeMedia:dms.repo
+      sudo zypper in hyprland dms hyprpolkitagent
+    else
+      error "Unsupported OS. Not installing hyprland."
+      return
     fi
+  fi
 
-    cd ~/niri-config && {
-        log "Stowing hyprland dotfiles"
-        stow --no-folding --adopt hypr
-        git stash --include-untracked --message "Stashing hyprland dotfiles" || true
-        mkdir -p ~/.config/hypr/dms
-        touch ~/.config/hypr/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
-    }
+  cd ~/niri-config && {
+    log "Stowing hyprland dotfiles"
+    stow --no-folding --adopt hypr
+    git stash --include-untracked --message "Stashing hyprland dotfiles" || true
+    mkdir -p ~/.config/hypr/dms
+    touch ~/.config/hypr/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
+  }
 
-    systemctl --user add-wants hyprland-session.target dms
+  systemctl --user add-wants hyprland-session.target dms
 }
 
 incus_setup() {
-    log "Setting up incus"
-    sudo usermod -aG incus "$USER"
-    sudo usermod -aG incus-admin "$USER"
-    sudo systemctl enable --now incus.socket
-    sudo incus admin init --minimal
+  log "Setting up incus"
+  sudo usermod -aG incus "$USER"
+  sudo usermod -aG incus-admin "$USER"
+  sudo systemctl enable --now incus.socket
+  sudo incus admin init --minimal
 }
 
 flatpaks_install() {
-    log "Adding flathub remote"
-    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo --user
+  log "Adding flathub remote"
+  flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo --user
 
-    local -a flatpaks=(
-        com.github.tchx84.Flatseal
-        sh.loft.devpod
-        org.gnome.Papers
-        io.github.kolunmi.Bazaar
-    )
+  local -a flatpaks=(
+    com.github.tchx84.Flatseal
+    sh.loft.devpod
+    org.gnome.Papers
+    io.github.kolunmi.Bazaar
+  )
 
-    log "Installing flatpaks..."
-    for pkg in "${flatpaks[@]}"; do
-        flatpak --user install -y flathub "$pkg"
-    done
+  log "Installing flatpaks..."
+  for pkg in "${flatpaks[@]}"; do
+    flatpak --user install -y flathub "$pkg"
+  done
 }
 
 update_packages() {
-    log "Updating packages"
+  log "Updating packages"
 
-    if is_pikaos; then
-        pikman update && pikman upgrade
-    elif is_fedora; then
-        sudo dnf update -y
-    elif is_trixie || is_questing; then
-        sudo apt update && sudo apt upgrade -y
-    else
-        error "OS not supported. Quitting."
-        exit 1
-    fi
+  if is_pikaos; then
+    pikman update && pikman upgrade
+  elif is_fedora; then
+    sudo dnf update -y
+  elif is_trixie || is_questing; then
+    sudo apt update && sudo apt upgrade -y
+  elif is_tw; then
+    sudo zypper refresh && sudp zypper update
+  else
+    error "OS not supported. Quitting."
+    exit 1
+  fi
 }
 
 si() {
-    log "Installing $*"
-    if is_fedora; then
-        sudo apt install -y "$@"
-    elif is_trixie || is_questing; then
-        sudo apt install -y "$@"
-    elif is_pikaos; then
-        pikman install "$@"
-    else
-        error "OS not supported. Not installing $*."
-        return 1
-    fi
+  log "Installing $*"
+  if is_fedora; then
+    sudo apt install -y "$@"
+  elif is_trixie || is_questing; then
+    sudo apt install -y "$@"
+  elif is_pikaos; then
+    pikman install "$@"
+  elif is_tw; then
+    sudo zypper in "$@"
+  else
+    error "OS not supported. Not installing $*."
+    return 1
+  fi
 }
 
 virt_install() {
-    log "Installing virtualization packages(distrobox, virt-manager, incus)"
-    local -a packages=(
-        podman
-        distrobox
-        virt-manager
-        incus
-    )
-    si "${packages[@]}"
-    incus_setup
+  log "Installing virtualization packages(distrobox, virt-manager, incus)"
+  local -a packages=(
+    podman
+    distrobox
+    virt-manager
+    incus
+  )
+  si "${packages[@]}"
+  incus_setup
 }
 
 nix_install() {
-    has_cmd nix && {
-        log "nix is already installed"
-        return
-    }
+  has_cmd nix && {
+    log "nix is already installed"
+    return
+  }
 
-    log "Installing nix"
-    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --determinate --no-confirm
-    # shellcheck disable=SC1091
-    source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+  log "Installing nix"
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --determinate --no-confirm
+  # shellcheck disable=SC1091
+  source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 
-    log "Setting up home-manager"
-    nix run home-manager -- switch --flake ~/niri-config/home-manager\#"$USER" --impure
+  log "Setting up home-manager"
+  nix run home-manager -- switch --flake ~/niri-config/home-manager\#"$USER" --impure
 }
 
 system_install() {
-    update_packages
+  update_packages
 
-    local -a common_pkgs=(
-        cmake
-        flatpak
-        g++
-        gcc
-        git
-        gnome-keyring
-        make
-        micro
-        mpv
-        pass
-        pipx
-        plocate
-        qt5ct
-        qt6ct
-        rclone
-        rsync
-        snapper
-        stow
-        tar
-        tmux
-        trash-cli
-        tree
-        unzip
-        zsh
-        zstd
-    )
-    local -a apt_pkgs=(
-        libsecret-tools
-        bibata-cursor-theme
-        imagemagick
-        starship
-    )
-    local -a pika_pkgs=(
-        snapper-gui
-        nushell
-        pika-refind-btrfs-hooks
-        refind-btrfs
-        zig
-    )
-    local -a fedora_pkgs=(
-        # sddm
-        # sddm-themes
-        nu
-    )
+  local -a common_pkgs=(
+    cmake
+    flatpak
+    g++
+    gcc
+    git
+    gnome-keyring
+    make
+    micro
+    mpv
+    pass
+    pipx
+    plocate
+    qt5ct
+    qt6ct
+    rclone
+    rsync
+    snapper
+    stow
+    tar
+    tmux
+    trash-cli
+    tree
+    unzip
+    zsh
+    zstd
+  )
 
-    log "Installing system packages"
-    if is_trixie || is_pikaos || is_questing; then
-        si "${common_pkgs[@]}" "${apt_pkgs[@]}"
-    fi
+  local -a tw_pkgs=(
+    gcc-c++
+    gopass
+    micro-editor
+    python313-pipx
+  )
+  local -a apt_pkgs=(
+    libsecret-tools
+    bibata-cursor-theme
+    imagemagick
+    starship
+  )
+  local -a pika_pkgs=(
+    snapper-gui
+    nushell
+    pika-refind-btrfs-hooks
+    refind-btrfs
+    zig
+  )
+  local -a fedora_pkgs=(
+    # sddm
+    # sddm-themes
+    nu
+  )
 
-    if is_pikaos; then
-        si "${pika_pkgs[@]}"
-        snapper_setup
-    elif is_fedora; then
-        sudo dnf install -y "${common_pkgs[@]}" "${fedora_pkgs[@]}"
-        systemctl --user disable waybar.service || true
-    fi
+  log "Installing system packages"
+  if is_trixie || is_pikaos || is_questing; then
+    si "${common_pkgs[@]}" "${apt_pkgs[@]}"
+  fi
 
-    log "Installing pywal packages"
-    pipx install pywal pywalfox
+  if is_pikaos; then
+    si "${pika_pkgs[@]}"
+    snapper_setup
+  elif is_fedora; then
+    sudo dnf install -y "${common_pkgs[@]}" "${fedora_pkgs[@]}"
+    systemctl --user disable waybar.service || true
+  elif is_tw; then
+    sudo zypper in "${common_pkgs[@]}" "${tw_pkgs[@]}"
+  fi
 
-    log "Updating locate database, this may take a while..."
-    sudo updatedb
+  log "Installing pywal packages"
+  pipx install pywal pywalfox
+
+  log "Updating locate database, this may take a while..."
+  sudo updatedb
 }
 
 pixi_install() {
-    log "Installing pixi and shell tools with pixi"
+  log "Installing pixi and shell tools with pixi"
 
-    brew install pixi
+  brew install pixi
 
-    local -a pixi_pkgs=(
-        bash-language-server
-        bat
-        bottom
-        carapace
-        direnv
-        duf
-        eza
-        fd
-        fzf
-        gdu
-        gh
-        go-gum
-        go-shfmt
-        jq
-        just
-        lazygit
-        mask
-        ripgrep
-        shellcheck
-        tealdeer
-        tectonic
-        television
-        xh
-        yazi
-        zoxide
-    )
+  local -a pixi_pkgs=(
+    bash-language-server
+    bat
+    bottom
+    carapace
+    direnv
+    duf
+    eza
+    fd
+    fzf
+    gdu
+    gh
+    go-gum
+    go-shfmt
+    jq
+    just
+    lazygit
+    mask
+    ripgrep
+    shellcheck
+    tealdeer
+    tectonic
+    television
+    xh
+    yazi
+    zoxide
+  )
 
-    pixi global install "${pixi_pkgs[@]}"
-    has_cmd starship || pixi global install starship
-    ~/.pixi/bin/tldr --update
+  pixi global install "${pixi_pkgs[@]}"
+  has_cmd starship || pixi global install starship
+  ~/.pixi/bin/tldr --update
 }
 
 shell_install() {
-    brew_install
-    pixi_install
+  brew_install
+  pixi_install
 }
 
 emacs_install() {
-    log "Installing emacs"
-    if has_cmd pikman; then
-        pikman --arch install emacs
-    else
-        si emacs
-    fi
+  log "Installing emacs"
+  if has_cmd pikman; then
+    pikman --arch install emacs
+  else
+    si emacs
+  fi
 
-    log "Installing doomemacs"
-    git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
-    ∙ ~/.config/emacs/bin/doom install
+  log "Installing doomemacs"
+  git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
+  ∙ ~/.config/emacs/bin/doom install
 }
 
 rust_install() {
-    has_cmd rustup && {
-        log "rustup is already installed"
-        return
-    }
+  has_cmd rustup && {
+    log "rustup is already installed"
+    return
+  }
 
-    log "Installing rustup"
-    curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh
+  log "Installing rustup"
+  curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs | sh
 }
 
 nushell_setup() {
-    if ! is_pikaos; then
-        log "Setting up nushell"
-        grep -q "nushell" /etc/shells || {
-            echo "/usr/bin/nu" | sudo tee -a /etc/shells
-        }
-    fi
-    cd ~/niri-config && {
-        log "Stowing nushell dotfiles"
-        stow --no-folding --adopt nushell
-        git stash --include-untracked --message "Stashing nushell dotfiles" || true
+  if ! is_pikaos; then
+    log "Setting up nushell"
+    grep -q "nushell" /etc/shells || {
+      echo "/usr/bin/nu" | sudo tee -a /etc/shells
     }
+  fi
+  cd ~/niri-config && {
+    log "Stowing nushell dotfiles"
+    stow --no-folding --adopt nushell
+    git stash --include-untracked --message "Stashing nushell dotfiles" || true
+  }
 }
 
 devpod_install() {
-    has_cmd devpod && {
-        log "devpod is already installed"
-        return
-    }
+  has_cmd devpod && {
+    log "devpod is already installed"
+    return
+  }
 
-    log "Installing devpod"
-    local devpod_tmp
-    devpod_tmp=$(mktemp)
-    curl -L -o "$devpod_tmp" "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-amd64" &&
-        chmod +x "$devpod_tmp" &&
-        mv "$devpod_tmp" ~/.local/bin/devpod
-    rm -f "$devpod_tmp"
+  log "Installing devpod"
+  local devpod_tmp
+  devpod_tmp=$(mktemp)
+  curl -L -o "$devpod_tmp" "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-amd64" &&
+    chmod +x "$devpod_tmp" &&
+    mv "$devpod_tmp" ~/.local/bin/devpod
+  rm -f "$devpod_tmp"
 }
 
 astro_install() {
-    if dir_exists ~/.config/nvim; then
-        prompt_yn "Found existing nvim config. Do you want to trash and replace with AstroNvim?" || return 0
-    fi
+  if dir_exists ~/.config/nvim; then
+    prompt_yn "Found existing nvim config. Do you want to trash and replace with AstroNvim?" || return 0
+  fi
 
-    log "Installing AstroNvim"
-    trash ~/.config/nvim.bak || true
-    mv ~/.config/nvim ~/.config/nvim.bak 2>/dev/null || true
-    mkdir ~/.config/nvim 2>/dev/null || true
-    mv ~/.local/share/nvim ~/.local/share/nvim.bak 2>/dev/null || true
-    mv ~/.local/state/nvim ~/.local/state/nvim.bak 2>/dev/null || true
-    mv ~/.cache/nvim ~/.cache/nvim.bak 2>/dev/null || true
-    git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim
-    rm -rf ~/.config/nvim/.git
+  log "Installing AstroNvim"
+  trash ~/.config/nvim.bak || true
+  mv ~/.config/nvim ~/.config/nvim.bak 2>/dev/null || true
+  mkdir ~/.config/nvim 2>/dev/null || true
+  mv ~/.local/share/nvim ~/.local/share/nvim.bak 2>/dev/null || true
+  mv ~/.local/state/nvim ~/.local/state/nvim.bak 2>/dev/null || true
+  mv ~/.cache/nvim ~/.cache/nvim.bak 2>/dev/null || true
+  git clone --depth 1 https://github.com/AstroNvim/template ~/.config/nvim
+  rm -rf ~/.config/nvim/.git
 }
 
 zshrc_setup() {
-    log "Setting zsh as default shell"
-    chsh -s "$(which zsh)"
+  log "Setting zsh as default shell"
+  chsh -s "$(which zsh)"
 }
 
 bashrc_setup() {
-    log "Setting up bashrc"
-    grep -q "niri-config/scripts/shellrc" ~/.bashrc || {
-        echo "source ~/niri-config/scripts/shellrc" >>~/.bashrc
-    }
+  log "Setting up bashrc"
+  grep -q "niri-config/scripts/shellrc" ~/.bashrc || {
+    echo "source ~/niri-config/scripts/shellrc" >>~/.bashrc
+  }
 }
 
 dotfiles_install() {
-    cd || {
-        error "Failed to change to home directory"
-        return
-    }
+  cd || {
+    error "Failed to change to home directory"
+    return
+  }
 
-    log "Setting up dotfiles"
-    trash ~/niri-config.bak || true
-    mv ~/niri-config ~/niri-config.bak 2>/dev/null || true
-    git clone --depth 1 https://github.com/pervezfunctor/niri-config.git ~/niri-config
-    cd ~/niri-config && {
-        stow --no-folding --adopt kitty zsh
-        git stash --include-untracked --message "Stashing kitty,zsh dotfiles" || true
-    }
+  log "Setting up dotfiles"
+  trash ~/niri-config.bak || true
+  mv ~/niri-config ~/niri-config.bak 2>/dev/null || true
+  git clone --depth 1 https://github.com/pervezfunctor/niri-config.git ~/niri-config
+  cd ~/niri-config && {
+    stow --no-folding --adopt kitty zsh
+    git stash --include-untracked --message "Stashing kitty,zsh dotfiles" || true
+  }
 
-    bashrc_setup
-    nushell_setup
-    astro_install
-    dms_setup
-    zshrc_setup
+  bashrc_setup
+  nushell_setup
+  astro_install
+  dms_setup
+  zshrc_setup
 }
 
 devtools_install() {
-    has_cmd mise || {
-        curl https://mise.run | sh
+  has_cmd mise || {
+    curl https://mise.run | sh
+  }
+
+  log "Installing devtools(mise, neovim, vscode etc)"
+
+  brew install uv mise neovim topgrade
+  brew install --cask visual-studio-code-linux
+
+  local -a extensions=(
+    jdinhlife.gruvbox
+    jnoortheen.nix-ide
+    mads-hartmann.bash-ide-vscode
+    TheNuProjectContributors.vscode-nushell-lang
+    timonwong.shellcheck
+  )
+
+  log "Installing vscode extensions"
+  for ext in "${extensions[@]}"; do
+    log "Installing $ext"
+    code --install-extension "$ext"
+  done
+  cd ~/niri-config && {
+    log "Stowing vscode dotfiles"
+    stow --no-folding --adopt vscode
+    git stash --include-untracked --message "Stashing vscode dotfiles" || true
+  }
+
+  eval "$(~/.local/bin/mise activate bash)"
+  log "Installing pnpm"
+  mise use -g node@latest pnpm
+  pnpm setup
+
+  local -a npm_pkgs=(
+    @mermaid-js/mermaid-cli
+    @google/gemini-cli
+    opencode-ai
+  )
+
+  log "Installing pnpm packages"
+  for pkg in "${npm_pkgs[@]}"; do
+    log "Installing $pkg"
+    pnpm install -g "$pkg"
+  done
+
+  dir_exists ~/jupyter-lab || {
+    log "Setting up jupyter-lab"
+    mkdir -p ~/jupyter-lab
+    cd ~/jupyter-lab || {
+      error "Failed to change to jupyter-lab directory"
+      return
     }
+    uv venv --seed
+    uv pip install pydantic
+    uv pip install jupyterlab
+  }
 
-    log "Installing devtools(mise, neovim, vscode etc)"
-
-    brew install uv mise neovim topgrade
-    brew install --cask visual-studio-code-linux
-
-    local -a extensions=(
-        jdinhlife.gruvbox
-        jnoortheen.nix-ide
-        mads-hartmann.bash-ide-vscode
-        TheNuProjectContributors.vscode-nushell-lang
-        timonwong.shellcheck
-    )
-
-    log "Installing vscode extensions"
-    for ext in "${extensions[@]}"; do
-        log "Installing $ext"
-        code --install-extension "$ext"
-    done
-    cd ~/niri-config && {
-        log "Stowing vscode dotfiles"
-        stow --no-folding --adopt vscode
-        git stash --include-untracked --message "Stashing vscode dotfiles" || true
-    }
-
-    eval "$(~/.local/bin/mise activate bash)"
-    log "Installing pnpm"
-    mise use -g node@latest pnpm
-    pnpm setup
-
-    local -a npm_pkgs=(
-        @mermaid-js/mermaid-cli
-        @google/gemini-cli
-        opencode-ai
-    )
-
-    log "Installing pnpm packages"
-    for pkg in "${npm_pkgs[@]}"; do
-        log "Installing $pkg"
-        pnpm install -g "$pkg"
-    done
-
-    dir_exists ~/jupyter-lab || {
-        log "Setting up jupyter-lab"
-        mkdir -p ~/jupyter-lab
-        cd ~/jupyter-lab || {
-            error "Failed to change to jupyter-lab directory"
-            return
-        }
-        uv venv --seed
-        uv pip install pydantic
-        uv pip install jupyterlab
-    }
-
-    log "Installing claude"
-    has_cmd claude || curl -fsSL https://claude.ai/install.sh | bash
-    devpod_install
-    rust_install
+  log "Installing claude"
+  has_cmd claude || curl -fsSL https://claude.ai/install.sh | bash
+  devpod_install
+  rust_install
 }
 
 motltbot_install() {
-    log "Installing moltbot"
-    curl -fsSL https://molt.bot/install.sh | bash
+  log "Installing moltbot"
+  curl -fsSL https://molt.bot/install.sh | bash
 }
 
 zed_install() {
-    has_cmd zed && {
-        log "zed is already installed"
-        return
-    }
+  has_cmd zed && {
+    log "zed is already installed"
+    return
+  }
 
-    log "Installing zed"
-    curl -f https://zed.dev/install.sh | sh
+  log "Installing zed"
+  curl -f https://zed.dev/install.sh | sh
 
-    cd ~/niri-config && {
-        log "Stowing zed dotfiles"
-        stow --no-folding --adopt zed
-        git stash --include-untracked --message "Stashing zed dotfiles" || true
-    }
+  cd ~/niri-config && {
+    log "Stowing zed dotfiles"
+    stow --no-folding --adopt zed
+    git stash --include-untracked --message "Stashing zed dotfiles" || true
+  }
 }
 
 whiptail_choices() {
-    local -a whiptail_items=(
-        "system" "Install system packages" "on"
-        "dotfiles" "Setup dotfiles with stow" "on"
-        "shell" "Install shell tools" "on"
-        "devtools" "Install devtools(vscode, mise etc)" "on"
-        "flatpaks" "Install flatpaks(devpod etc)" "on"
-        "virt" "Install virtualization packages" "off"
-        "zed" "Install zed" "off"
-        "emacs" "Setup emacs" "off"
-        "nix" "Setup nix with home-manager" "off"
-    )
+  local -a whiptail_items=(
+    "system" "Install system packages" "on"
+    "dotfiles" "Setup dotfiles with stow" "on"
+    "shell" "Install shell tools" "on"
+    "devtools" "Install devtools(vscode, mise etc)" "on"
+    "flatpaks" "Install flatpaks(devpod etc)" "on"
+    "virt" "Install virtualization packages" "off"
+    "zed" "Install zed" "off"
+    "emacs" "Setup emacs" "off"
+    "nix" "Setup nix with home-manager" "off"
+  )
 
-    if is_fedora || is_questing || is_pikaos; then
-        whiptail_items+=("niri" "Install niri" "off")
-    fi
-    if is_fedora || is_pikaos; then
-        whiptail_items+=("mangowc" "Install mangowc" "off")
-        whiptail_items+=("hypr" "Install hyprland" "off")
-    fi
+  if is_fedora || is_questing || is_pikaos || is_tw; then
+    whiptail_items+=("niri" "Install niri" "off")
+  fi
+  if is_fedora || is_pikaos; then
+    whiptail_items+=("mangowc" "Install mangowc" "off")
+  fi
+  if is_fedora || is_pikaos || is_tw; then
+    whiptail_items+=("hypr" "Install hyprland" "off")
+  fi
 
-    local selected_output
-    selected_output=$(whiptail --checklist "Select tasks to execute:" 25 60 19 "${whiptail_items[@]}" 3>&1 1>&2 2>&3)
+  local selected_output
+  selected_output=$(whiptail --checklist "Select tasks to execute:" 25 60 19 "${whiptail_items[@]}" 3>&1 1>&2 2>&3)
 
-    local exit_code=$?
-    if [ $exit_code -ne 0 ]; then
-        warn "Setup cancelled."
-        return 1
-    fi
+  local exit_code=$?
+  if [ $exit_code -ne 0 ]; then
+    warn "Setup cancelled."
+    return 1
+  fi
 
-    local -a selected_tasks=()
-    if [ -n "$selected_output" ]; then
-        read -ra selected_tasks <<<"$selected_output"
-    fi
+  local -a selected_tasks=()
+  if [ -n "$selected_output" ]; then
+    read -ra selected_tasks <<<"$selected_output"
+  fi
 
-    if [ ${#selected_tasks[@]} -eq 0 ]; then
-        log "No tasks selected."
-        return 0
-    fi
+  if [ ${#selected_tasks[@]} -eq 0 ]; then
+    log "No tasks selected."
+    return 0
+  fi
 
-    for task in "${selected_tasks[@]}"; do
-        task=${task//\"/}
-        log "Executing: $task"
-        "${task}_install"
-    done
+  for task in "${selected_tasks[@]}"; do
+    task=${task//\"/}
+    log "Executing: $task"
+    "${task}_install"
+  done
 }
 
 prompts() {
-    prompt_yn "Install system packages?" && system_install
-    prompt_yn "Setup dotfiles with stow?" && dotfiles_install
-    prompt_yn "Install shell tools?" && shell_install
-    prompt_yn "Setup devtools?" && devtools_install
-    prompt_yn "Install flatpaks(devpod etc)?" && flatpaks_install
-    prompt_yn "Install virtualization packages?" && virt_install
-    prompt_yn "Install zed?" && zed_install
-    prompt_yn "Setup emacs?" && emacs_install
-    prompt_yn "Setup nix with home-manager?" && nix_install
+  prompt_yn "Install system packages?" && system_install
+  prompt_yn "Setup dotfiles with stow?" && dotfiles_install
+  prompt_yn "Install shell tools?" && shell_install
+  prompt_yn "Setup devtools?" && devtools_install
+  prompt_yn "Install flatpaks(devpod etc)?" && flatpaks_install
+  prompt_yn "Install virtualization packages?" && virt_install
+  prompt_yn "Install zed?" && zed_install
+  prompt_yn "Setup emacs?" && emacs_install
+  prompt_yn "Setup nix with home-manager?" && nix_install
 
-    if is_fedora || is_questing || is_pikaos; then
-        prompt_yn "Install niri?" && niri_install
-    fi
-    if is_fedora || is_pikaos; then
-        prompt_yn "Setup mangowc?" && mangowc_install
-        prompt_yn "Setup hyprland?" && hyprland_install
-    fi
+  if is_fedora || is_questing || is_pikaos || is_tw; then
+    prompt_yn "Install niri?" && niri_install
+  fi
+  if is_fedora || is_pikaos; then
+    prompt_yn "Setup mangowc?" && mangowc_install
+
+  fi
+  if is_fedora || is_pikaos || is_tw; then
+    prompt_yn "Setup hyprland?" && hyprland_install
+  fi
 }
 
 main() {
-    rm -f "$HOME"/.niri-config-*.log
-    keep_sudo_alive
+  rm -f "$HOME"/.niri-config-*.log
+  keep_sudo_alive
 
-    is_pikaos || is_fedora || is_trixie || is_questing || {
-        error "This script is only meant to be run on PikaOS/Fedora/Questing"
-        return 1
-    }
+  is_pikaos || is_fedora || is_trixie || is_questing || is_tw || is_mac || {
+    error "This script is only meant to be run on PikaOS/Fedora/Questing/Tumbeweed/MacOS"
+    return 1
+  }
 
-    export PATH="/home/linuxbrew/.linuxbrew/bin:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
+  export PATH="/home/linuxbrew/.linuxbrew/bin:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
 
-    mkdir -p ~/Pictures/Screenshots ~/Pictures/Wallpapers
+  mkdir -p ~/Pictures/Screenshots ~/Pictures/Wallpapers
 
-    if is_mac; then
-        shell_install
-        brew install stow rsync rclone tar tmux tree trash-cli unzip nushell
-        dotfiles_install
-        devtools_install
-        return 0
-    fi
+  if is_mac; then
+    shell_install
+    brew install stow rsync rclone tar tmux tree trash-cli unzip nushell
+    dotfiles_install
+    devtools_install
+    return 0
+  fi
 
-    if command -v whiptail >/dev/null 2>&1; then
-        whiptail_choices || return 1
-        return 0
-    fi
+  if command -v whiptail >/dev/null 2>&1; then
+    whiptail_choices || return 1
+    return 0
+  fi
 
-    prompts
+  prompts
 }
 
 main "$@"
