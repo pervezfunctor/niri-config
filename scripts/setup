@@ -37,6 +37,10 @@ is_mac() {
   [ "$(uname -s)" = "Darwin" ]
 }
 
+is_arch() {
+  [ -f /etc/os-release ] && grep -q 'Arch Linux' /etc/os-release 2>/dev/null
+}
+
 prompt_yn() {
   local prompt="$1"
   local response
@@ -117,13 +121,23 @@ brew_install() {
   brew install --cask font-jetbrains-mono-nerd-font font-fontawesome
 }
 
+paru_install() {
+  has_cmd paru && return 0
+  log "Installing paru"
+
+  rm -rf /tmp/paru
+  git clone https://aur.archlinux.org/paru.git /tmp/paru && cd /tmp/paru && makepkg --syncdeps --noconfirm --install && cd - && frm /tmp/paru
+}
+
 wm_install() {
   local -a pkgs=(
     cliphist
     grim
     mate-polkit
+    nautilus
     pipewire
     pipewire-pulse
+    qt6-multimedia
     slurp
     wireplumber
     wl-clipboard
@@ -132,8 +146,11 @@ wm_install() {
     xdg-desktop-portal-wlr
   )
 
+  is_tw && pkgs+=(pipewire-pulseaudio)
+  is_arch && pkgs+=(pipewire-jack)
   si "${pkgs[@]}"
-  is_tw && si pipewire-pulseaudio
+
+  is_arch && paru_install
 }
 
 niri_install() {
@@ -144,14 +161,18 @@ niri_install() {
       pikman install pika-niri-desktop-minimal pika-niri-settings dms
     elif is_fedora; then
       sudo dnf copr enable avengemedia/dms
-      sudo dnf install -y niri dms
+      si niri dms
     elif is_questing; then
       sudo add-apt-repository ppa:avengemedia/danklinux
       sudo add-apt-repository ppa:avengemedia/dms
-      sudo apt install -y niri dms
+      sudo apt update
+      si niri dms
     elif is_tw; then
       sudo zypper addrepo https://download.opensuse.org/repositories/home:/AvengeMedia:/dms/openSUSE_Tumbleweed/home:AvengeMedia:dms.repo
-      sudo zypper niri dms
+      sudo zypper refresh
+      si niri dms
+    elif is_arch; then
+      paru -S niri dms-shell-bin
     else
       error "OS not supported. Not installing niri."
       return 1
@@ -175,10 +196,12 @@ mangowc_install() {
     wm_install
     if is_pikaos; then
       pikman install mangowc
+    elif is_arch; then
+      paru -S mangowc-git dms-shell-bin
     elif is_fedora && prompt_yn "need terra repository for installing mango. This is NOT stable. Still enable it?"; then
       sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
       sudo dnf copr enable avengemedia/dms
-      sudo dnf install -y mangowc dms
+      si mangowc dms
     else
       error "Unsupported OS. Not installing mangowc."
     fi
@@ -205,11 +228,14 @@ hyprland_install() {
     elif is_fedora; then
       sudo dnf copr enable solopasha/hyprland
       sudo dnf copr enable avengemedia/dms
-      sudo dnf install -y hyprland dms
-      sudo dnf install -y hyprpolkitagent
+      si hyprland dms
+      si hyprpolkitagent
+    elif is_arch; then
+      paru -S hyprland dms-shell-bin
     elif is_tw; then
       sudo zypper addrepo https://download.opensuse.org/repositories/home:/AvengeMedia:/dms/openSUSE_Tumbleweed/home:AvengeMedia:dms.repo
-      sudo zypper in hyprland dms hyprpolkitagent
+      sudo zypper refresh
+      si hyprland dms hyprpolkitagent
     else
       error "Unsupported OS. Not installing hyprland."
       return
@@ -262,7 +288,9 @@ update_packages() {
   elif is_trixie || is_questing; then
     sudo apt update && sudo apt upgrade -y
   elif is_tw; then
-    sudo zypper refresh && sudp zypper update
+    sudo zypper refresh && sudo zypper update
+  elif is_arch; then
+    sudo pacman -Syu
   else
     error "OS not supported. Quitting."
     exit 1
@@ -272,13 +300,15 @@ update_packages() {
 si() {
   log "Installing $*"
   if is_fedora; then
-    sudo apt install -y "$@"
+    sudo dnf install -y "$@"
   elif is_trixie || is_questing; then
     sudo apt install -y "$@"
   elif is_pikaos; then
     pikman install "$@"
   elif is_tw; then
-    sudo zypper in "$@"
+    sudo zypper --non-interactive --quiet install --auto-agree-with-licenses "$@"
+  elif is_arch; then
+    sudo pacman -S --quiet --noconfirm "$@"
   else
     error "OS not supported. Not installing $*."
     return 1
@@ -318,7 +348,6 @@ system_install() {
   local -a common_pkgs=(
     cmake
     flatpak
-    g++
     gcc
     git
     gnome-keyring
@@ -326,7 +355,6 @@ system_install() {
     micro
     mpv
     pass
-    pipx
     plocate
     qt5ct
     qt6ct
@@ -350,22 +378,32 @@ system_install() {
     python313-pipx
   )
   local -a apt_pkgs=(
+    g++
     libsecret-tools
     bibata-cursor-theme
     imagemagick
     starship
+    pipx
   )
   local -a pika_pkgs=(
+    g++
     snapper-gui
     nushell
     pika-refind-btrfs-hooks
     refind-btrfs
     zig
+    pipx
   )
   local -a fedora_pkgs=(
     # sddm
     # sddm-themes
+    g++
     nu
+    pipx
+  )
+  local -a arch_pkgs=(
+    g++
+    python-pipx
   )
 
   log "Installing system packages"
@@ -377,10 +415,12 @@ system_install() {
     si "${pika_pkgs[@]}"
     snapper_setup
   elif is_fedora; then
-    sudo dnf install -y "${common_pkgs[@]}" "${fedora_pkgs[@]}"
+    si "${common_pkgs[@]}" "${fedora_pkgs[@]}"
     systemctl --user disable waybar.service || true
   elif is_tw; then
-    sudo zypper in "${common_pkgs[@]}" "${tw_pkgs[@]}"
+    si "${common_pkgs[@]}" "${tw_pkgs[@]}"
+  elif is_arch; then
+    si "${common_pkgs[@]}" "${arch_pkgs[@]}"
   fi
 
   log "Installing pywal packages"
@@ -633,13 +673,13 @@ whiptail_choices() {
     "nix" "Setup nix with home-manager" "off"
   )
 
-  if is_fedora || is_questing || is_pikaos || is_tw; then
+  if is_fedora || is_questing || is_pikaos || is_tw || is_arch; then
     whiptail_items+=("niri" "Install niri" "off")
   fi
-  if is_fedora || is_pikaos; then
+  if is_fedora || is_pikaos || is_arch; then
     whiptail_items+=("mangowc" "Install mangowc" "off")
   fi
-  if is_fedora || is_pikaos || is_tw; then
+  if is_fedora || is_pikaos || is_tw || is_arch; then
     whiptail_items+=("hypr" "Install hyprland" "off")
   fi
 
@@ -680,14 +720,14 @@ prompts() {
   prompt_yn "Setup emacs?" && emacs_install
   prompt_yn "Setup nix with home-manager?" && nix_install
 
-  if is_fedora || is_questing || is_pikaos || is_tw; then
+  if is_fedora || is_questing || is_pikaos || is_tw || is_arch; then
     prompt_yn "Install niri?" && niri_install
   fi
-  if is_fedora || is_pikaos; then
+  if is_fedora || is_pikaos || is_arch; then
     prompt_yn "Setup mangowc?" && mangowc_install
 
   fi
-  if is_fedora || is_pikaos || is_tw; then
+  if is_fedora || is_pikaos || is_tw || is_arch; then
     prompt_yn "Setup hyprland?" && hyprland_install
   fi
 }
@@ -696,7 +736,7 @@ main() {
   rm -f "$HOME"/.niri-config-*.log
   keep_sudo_alive
 
-  is_pikaos || is_fedora || is_trixie || is_questing || is_tw || is_mac || {
+  is_pikaos || is_fedora || is_trixie || is_questing || is_tw || is_mac || is_arch || {
     error "This script is only meant to be run on PikaOS/Fedora/Questing/Tumbeweed/MacOS"
     return 1
   }
