@@ -75,6 +75,7 @@ alias gfm='git pull'
 alias gcm='git commit --message'
 alias gia='git add'
 alias gco='git checkout'
+alias dms-logs='journalctl --user -u dms -f'
 
 if ! has_cmd bat && has_cmd batcat; then
     alias b='batcat'

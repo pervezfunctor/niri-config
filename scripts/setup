@@ -211,12 +211,12 @@ mangowc_install() {
   cd ~/niri-config && {
     log "Stowing mangowc dotfiles"
     stow --no-folding --adopt mango systemd
-    git stash --include-untracked --message "Stashing mangowc dotfiles" || true
+    git stash --include-untracked --message "Stashing mangowc dotfiles"
     mkdir -p ~/.config/mango/dms
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
+    systemctl --user add-wants hyprland-session.target dms
   }
-
-  systemctl --user add-wants mango-session.target dms || true
+  systemctl --user add-wants wm-session.target dms
 }
 
 hyprland_install() {
@@ -246,12 +246,12 @@ hyprland_install() {
   cd ~/niri-config && {
     log "Stowing hyprland dotfiles"
     stow --no-folding --adopt hypr
-    git stash --include-untracked --message "Stashing hyprland dotfiles" || true
+    git stash --include-untracked --message "Stashing hyprland dotfiles"
     mkdir -p ~/.config/hypr/dms
     touch ~/.config/hypr/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
+    systemctl --user add-wants hyprland-session.target dms
   }
-
-  systemctl --user add-wants hyprland-session.target dms
+  systemctl --user add-wants wm-session.target dms
 }
 
 incus_setup() {

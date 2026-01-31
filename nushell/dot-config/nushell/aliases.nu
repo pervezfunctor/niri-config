@@ -43,3 +43,4 @@ alias utlg = systemctl --user list-units
 alias utlf = systemctl --user list-units --all --state=failed
 alias uv-jupyter-standalone = uv tool run jupyter lab
 alias uv-marimo-standalone = uvx marimo edit --sandbox
+alias dms-logs = journalctl --user -u dms -f

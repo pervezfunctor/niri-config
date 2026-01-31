@@ -1,4 +1,4 @@
 [Unit]
-Description=MangoWC Session Target
+Description=MangoWC/Hyprland Session Target
 Requires=graphical-session.target
 After=graphical-session.target
