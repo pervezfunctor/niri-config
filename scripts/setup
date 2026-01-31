@@ -210,7 +210,7 @@ mangowc_install() {
 
   cd ~/niri-config && {
     log "Stowing mangowc dotfiles"
-    stow --no-folding --adopt mangowc systemd
+    stow --no-folding --adopt mango systemd
     git stash --include-untracked --message "Stashing mangowc dotfiles" || true
     mkdir -p ~/.config/mango/dms
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
