@@ -125,6 +125,7 @@ paru_install() {
   has_cmd paru && return 0
   log "Installing paru"
 
+  si base-devel
   rm -rf /tmp/paru
   git clone https://aur.archlinux.org/paru.git /tmp/paru && cd /tmp/paru && makepkg --syncdeps --noconfirm --install && cd - && frm /tmp/paru
 }
@@ -225,11 +226,11 @@ hyprland_install() {
     if is_pikaos; then
       pikman install pika-hyprland-desktop-minimal pika-hyprland-settings dms
       pikman install hyprpolkitagent
-    elif is_fedora; then
-      sudo dnf copr enable solopasha/hyprland
-      sudo dnf copr enable avengemedia/dms
-      si hyprland dms
-      si hyprpolkitagent
+    # elif is_fedora; then
+    #   sudo dnf copr enable solopasha/hyprland
+    #   sudo dnf copr enable avengemedia/dms
+    #   si hyprland dms
+    #   si hyprpolkitagent
     elif is_arch; then
       paru -S hyprland dms-shell-bin
     elif is_tw; then
@@ -679,7 +680,7 @@ whiptail_choices() {
   if is_fedora || is_pikaos || is_arch; then
     whiptail_items+=("mangowc" "Install mangowc" "off")
   fi
-  if is_fedora || is_pikaos || is_tw || is_arch; then
+  if is_pikaos || is_tw || is_arch; then
     whiptail_items+=("hypr" "Install hyprland" "off")
   fi
 
@@ -727,7 +728,7 @@ prompts() {
     prompt_yn "Setup mangowc?" && mangowc_install
 
   fi
-  if is_fedora || is_pikaos || is_tw || is_arch; then
+  if is_pikaos || is_tw || is_arch; then
     prompt_yn "Setup hyprland?" && hyprland_install
   fi
 }
