@@ -21,4 +21,4 @@ autoload -Uz compinit
 compinit
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 
-source "$DOT_DIR/bin/shellrc"
+source "$DOT_DIR/shellrc"

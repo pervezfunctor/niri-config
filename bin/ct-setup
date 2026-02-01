@@ -312,8 +312,8 @@ zshrc_setup() {
 
 bashrc_setup() {
   log "Setting up bashrc"
-  grep -q "niri-config/bin/shellrc" ~/.bashrc || {
-    echo "source ~/niri-config/bin/shellrc" >>~/.bashrc
+  grep -q "niri-config/shellrc" ~/.bashrc || {
+    echo "source ~/niri-config/shellrc" >>~/.bashrc
   }
 }
 
