@@ -3,7 +3,7 @@
 DOT_DIR="$HOME/niri-config"
 
 export VOLTA_HOME="$HOME/.volta"
-export PATH="$DOT_DIR/scripts:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$VOLTA_HOME/bin:$PATH"
+export PATH="$DOT_DIR/bin:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$VOLTA_HOME/bin:$PATH"
 
 export XDG_DATA_DIRS="/home/pervez/.local/share/flatpak/exports/share:$XDG_DATA_DIRS"
 

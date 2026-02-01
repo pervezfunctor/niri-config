@@ -64,21 +64,18 @@ log() {
   local msg="$1"
   echo -e "\033[0;32m→ $msg\033[0m"
   echo "→ $msg" >>"$HOME/.niri-config-log.log"
-  sleep 0.5
 }
 
 warn() {
   local msg="$1"
   echo -e "\033[0;33m! $msg\033[0m"
   echo "! $msg" >>"$HOME/.niri-config-warn.log"
-  sleep 0.2
 }
 
 error() {
   local msg="$1"
   echo -e "\033[0;31m✗ $msg\033[0m"
   echo "✗ $msg" >>"$HOME/.niri-config-error.log"
-  sleep 0.2
 }
 
 die() {
@@ -134,6 +131,7 @@ wm_install() {
   local -a pkgs=(
     cliphist
     grim
+    gvfs
     mate-polkit
     nautilus
     pipewire
@@ -147,6 +145,7 @@ wm_install() {
     xdg-desktop-portal-wlr
   )
 
+  is_fedora && pkgs+=(gvfs-smb)
   is_tw && pkgs+=(pipewire-pulseaudio)
   is_arch && pkgs+=(pipewire-jack)
   si "${pkgs[@]}"
@@ -549,8 +548,8 @@ zshrc_setup() {
 
 bashrc_setup() {
   log "Setting up bashrc"
-  grep -q "niri-config/scripts/shellrc" ~/.bashrc || {
-    echo "source ~/niri-config/scripts/shellrc" >>~/.bashrc
+  grep -q "niri-config/bin/shellrc" ~/.bashrc || {
+    echo "source ~/niri-config/bin/shellrc" >>~/.bashrc
   }
 }
 
