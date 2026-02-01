@@ -52,12 +52,19 @@ wm_install() {
   is_arch && paru_install
 
   mkdir -p ~/Pictures/Screenshots ~/Pictures/Wallpapers
+
+  cd ~/.local/share/linux-config && {
+    log "Stowing xdg dotfiles"
+    stow --no-folding --adopt systemd
+    git stash --include-untracked --message "Stashing xdg dotfiles" || true
+  }
 }
 
 niri_install() {
   log "Installing niri"
-  if ! has_cmd niri; then
-    wm_install
+
+  wm_install
+  if ! has_cmd dms || ! has_cmd niri; then
     if is_pikaos; then
       pikman install pika-niri-desktop-minimal pika-niri-settings dms
     elif is_fedora; then
@@ -92,7 +99,7 @@ niri_install() {
 }
 
 mangowc_install() {
-  if ! has_cmd mango; then
+  if ! has_cmd dms || ! has_cmd mango; then
     log "Installing mangowc"
     wm_install
     if is_pikaos; then
@@ -114,13 +121,12 @@ mangowc_install() {
     git stash --include-untracked --message "Stashing mangowc dotfiles"
     mkdir -p ~/.config/mango/dms
     touch ~/.config/mango/dms/{alttab,colors,layout,wpblur,binds,cursor,outputs}.conf
-    systemctl --user add-wants hyprland-session.target dms
   }
   systemctl --user add-wants wm-session.target dms
 }
 
 hyprland_install() {
-  if ! has_cmd hyprctl; then
+  if ! has_cmd dms || ! has_cmd hyprctl; then
     log "Installing hyprland"
     wm_install
     if is_pikaos; then
