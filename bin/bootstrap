@@ -120,6 +120,8 @@
       sudo dnf update -y
     elif is_trixie || is_questing; then
       sudo apt update && sudo apt upgrade -y
+    elif is_pikaos; then
+      pikman update && pikman upgrade
     elif is_tw; then
       sudo zypper refresh && sudo zypper update
     elif is_arch; then
