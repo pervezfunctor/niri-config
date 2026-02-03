@@ -142,6 +142,8 @@
       sudo zypper --non-interactive --quiet install --auto-agree-with-licenses "$@"
     elif is_arch; then
       sudo pacman -S --quiet --noconfirm "$@"
+    elif is_mac; then
+      brew install "$@"
     else
       error "OS not supported. Not installing $*."
       return 1
@@ -179,8 +181,14 @@
     rm -f "$HOME"/.linux-config-*.log
     keep_sudo_alive
 
-    is_fedora || is_trixie || is_questing || is_tw || is_arch || {
-      error "Only  Fedora, Questing, Tumbeweed, Arch supported. Quitting."
+    if is_mac; then
+      xcode-select --install
+      /usr/sbin/softwareupdate --install-rosetta --agree-to-license
+      brew_install
+    fi
+
+    is_fedora || is_trixie || is_questing || is_tw || is_arch || is_pikaos || {
+      error "Only  Fedora, Questing, Tumbeweed, Arch, PikaOS supported. Quitting."
       exit 1
     }
 
