@@ -2,6 +2,24 @@
 
 {
   export DOT_DIR="$HOME/.local/share/linux-config"
+  LOG_ROOT="${LINUX_CONFIG_LOG_DIR:-$HOME/.linux-config-logs}"
+  LOG_TIMESTAMP="$(date '+%Y%m%d-%H%M%S')"
+  LOG_FILE="${LOG_ROOT}/bootstrap-${LOG_TIMESTAMP}.log"
+  LOG_AVAILABLE=0
+  LOG_NOTICE_SHOWN=0
+
+  init_log_file() {
+    if [ "$LOG_AVAILABLE" -eq 1 ]; then
+      return
+    fi
+
+    if mkdir -p "$LOG_ROOT" && : >"$LOG_FILE"; then
+      LOG_AVAILABLE=1
+    elif [ "$LOG_NOTICE_SHOWN" -eq 0 ]; then
+      echo -e "\033[0;33m! Unable to write bootstrap logs to $LOG_ROOT. File logging disabled.\033[0m" >&2
+      LOG_NOTICE_SHOWN=1
+    fi
+  }
 
   has_cmd() {
     command -v "$1" >/dev/null 2>&1
@@ -71,22 +89,31 @@
     done
   }
 
+  log_message() {
+    local level="$1"
+    local color="$2"
+    local symbol="$3"
+    local msg="$4"
+    local timestamp
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    echo -e "${color}${symbol} ${msg}\033[0m"
+    init_log_file
+    if [ "$LOG_AVAILABLE" -eq 1 ]; then
+      printf '%s [%s] %s\n' "$timestamp" "$level" "$msg" >>"$LOG_FILE"
+    fi
+  }
+
   log() {
-    local msg="$1"
-    echo -e "\033[0;32m→ $msg\033[0m"
-    echo "→ $msg" >>"$HOME/.linux-config-log.log"
+    log_message "INFO" "\033[0;32m" "→" "$1"
   }
 
   warn() {
-    local msg="$1"
-    echo -e "\033[0;33m! $msg\033[0m"
-    echo "! $msg" >>"$HOME/.linux-config-warn.log"
+    log_message "WARN" "\033[0;33m" "!" "$1"
   }
 
   error() {
-    local msg="$1"
-    echo -e "\033[0;31m✗ $msg\033[0m"
-    echo "✗ $msg" >>"$HOME/.linux-config-error.log"
+    log_message "ERROR" "\033[0;31m" "✗" "$1"
   }
 
   die() {
@@ -254,7 +281,6 @@
   bootstrap() {
     export PATH="${DOT_DIR}/bin:/home/linuxbrew/.linuxbrew/bin:$HOME/.pixi/bin:$HOME/bin:$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
 
-    rm -f "$HOME"/.linux-config-*.log
     keep_sudo_alive
 
     if is_mac; then

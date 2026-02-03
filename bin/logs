@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+LOG_DIR="${LINUX_CONFIG_LOG_DIR:-$HOME/.linux-config-logs}"
+LOG_FILES=()
+
+usage() {
+  cat <<'EOF'
+Usage: logs [--dir <path>] <command> [options]
+
+Commands:
+  clean             Remove all log files except the most recent one.
+  show [options]    Display log contents. Defaults to the most recent log.
+
+Show options:
+  -t, --timestamp <stamp>  Display the log matching the timestamp (YYYYMMDD-HHMMSS).
+  -s, --select             Interactively choose a log by timestamp or index.
+
+By default logs are read from ${LINUX_CONFIG_LOG_DIR:-$HOME/.linux-config-logs}.
+Override with the LINUX_CONFIG_LOG_DIR environment variable or the --dir flag.
+EOF
+}
+
+ensure_log_dir() {
+  mkdir -p "$LOG_DIR"
+}
+
+load_logs() {
+  ensure_log_dir
+  mapfile -t LOG_FILES < <(find "$LOG_DIR" -maxdepth 1 -type f -name '*.log' -print 2>/dev/null | LC_ALL=C sort -r)
+  if [ "${#LOG_FILES[@]}" -eq 0 ]; then
+    echo "No log files found in $LOG_DIR" >&2
+    echo "Run bootstrap or specify a different directory with --dir or LINUX_CONFIG_LOG_DIR." >&2
+    return 1
+  fi
+}
+
+extract_timestamp() {
+  local name="$1"
+  name="${name%.log}"
+  echo "${name##*-}"
+}
+
+match_log_by_timestamp() {
+  local stamp="$1"
+  local file name extracted
+  for file in "${LOG_FILES[@]}"; do
+    name="$(basename "$file")"
+    extracted="$(extract_timestamp "$name")"
+    if [[ "$extracted" == "$stamp" || "$extracted" == *"$stamp"* ]]; then
+      printf '%s\n' "$file"
+      return 0
+    fi
+  done
+  return 1
+}
+
+clean_logs() {
+  if ! load_logs; then
+    return 0
+  fi
+
+  local keep_file="${LOG_FILES[0]}"
+  if [ "${#LOG_FILES[@]}" -le 1 ]; then
+    echo "Only one log present (${keep_file##*/}); nothing to clean."
+    return 0
+  fi
+
+  local removed=0
+  local file
+  for file in "${LOG_FILES[@]:1}"; do
+    rm -f -- "$file"
+    removed=$((removed + 1))
+  done
+
+  echo "Kept ${keep_file##*/}; removed ${removed} older log(s)."
+}
+
+display_log() {
+  local file="$1"
+  if [ ! -f "$file" ]; then
+    echo "Log file not found: $file" >&2
+    return 1
+  fi
+
+  local name
+  name="$(basename "$file")"
+  echo "==== ${name} ===="
+  if command -v less >/dev/null 2>&1; then
+    less -R "$file"
+  else
+    cat "$file"
+  fi
+}
+
+interactive_select() {
+  local idx=1 file choice target=""
+  echo "Available log files:"
+  for file in "${LOG_FILES[@]}"; do
+    printf '  %2d) %s\n' "$idx" "$(basename "$file")"
+    idx=$((idx + 1))
+  done
+
+  read -r -p "Select log by number or timestamp (default=1): " choice
+  if [ -z "${choice:-}" ]; then
+    target="${LOG_FILES[0]}"
+  elif [[ "$choice" =~ ^[0-9]+$ ]]; then
+    local selection=$((choice - 1))
+    if (( selection < 0 || selection >= ${#LOG_FILES[@]} )); then
+      echo "Invalid selection: $choice" >&2
+      return 1
+    fi
+    target="${LOG_FILES[selection]}"
+  else
+    target="$(match_log_by_timestamp "$choice" || true)"
+    if [ -z "$target" ]; then
+      echo "No log found matching timestamp: $choice" >&2
+      return 1
+    fi
+  fi
+
+  display_log "$target"
+}
+
+show_logs() {
+  local timestamp=""
+  local select_flag="false"
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -t | --timestamp)
+      timestamp="$2"
+      shift 2
+      ;;
+    -s | --select)
+      select_flag="true"
+      shift
+      ;;
+    -h | --help)
+      usage
+      return 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage
+      return 1
+      ;;
+    esac
+  done
+
+  load_logs || return 1
+
+  if [ "$select_flag" = "true" ]; then
+    interactive_select
+    return
+  fi
+
+  local target=""
+  if [ -n "$timestamp" ]; then
+    target="$(match_log_by_timestamp "$timestamp" || true)"
+    if [ -z "$target" ]; then
+      echo "No log found matching timestamp: $timestamp" >&2
+      return 1
+    fi
+  else
+    target="${LOG_FILES[0]}"
+  fi
+
+  display_log "$target"
+}
+
+main() {
+  local command=""
+  local args=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --dir)
+      shift
+      if [ $# -eq 0 ]; then
+        echo "--dir requires a path argument." >&2
+        return 1
+      fi
+      LOG_DIR="$1"
+      shift
+      ;;
+    clean | show)
+      command="$1"
+      shift
+      args=("$@")
+      break
+      ;;
+    "" | -h | --help)
+      usage
+      return 0
+      ;;
+    *)
+      echo "Unknown option or command: $1" >&2
+      usage
+      return 1
+      ;;
+    esac
+  done
+
+  case "$command" in
+  clean)
+    clean_logs "${args[@]}"
+    ;;
+  show)
+    show_logs "${args[@]}"
+    ;;
+  *)
+    usage
+    return 1
+    ;;
+  esac
+}
+
+main "$@"
