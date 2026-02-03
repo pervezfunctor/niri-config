@@ -1,1 +1,6 @@
 dms/
+*.pyc
+.uv-cache/
+.venv/
+.ruff_cache/
+.pytest_cache/

@@ -1,0 +1,17 @@
+[defaults]
+user = "root"
+guest_user = "root"
+identity_file = "~/.ssh/proxmox"
+guest_identity_file = "~/.ssh/guest"
+ssh_extra_args = []
+guest_ssh_extra_args = []
+api_port = 8006
+api_insecure = false
+max_parallel = 2
+dry_run = true
+
+[[hosts]]
+name = "example"
+host = "proxmox.example.com"
+api.token_env = "PROXMOX_TOKEN_ID"
+api.secret_env = "PROXMOX_TOKEN_SECRET"
