@@ -55,9 +55,9 @@ wm_install() {
   mkdir -p ~/Pictures/Screenshots ~/Pictures/Wallpapers
 
   cd ~/.local/share/linux-config && {
-    log "Stowing xdg dotfiles"
+    log "Stowing systemd units"
     stow --no-folding --adopt systemd
-    git stash --include-untracked --message "Stashing xdg dotfiles" || true
+    git stash --include-untracked --message "Stashing systemd units" || true
   }
 }
 
