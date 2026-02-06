@@ -170,8 +170,14 @@ flatpaks_install() {
   local -a flatpaks=(
     app.zen_browser.zen
     com.github.tchx84.Flatseal
+    com.spotify.Client
+    io.github.flattool.Ignition
     io.github.kolunmi.Bazaar
+    md.obsidian.Obsidian
+    org.gnome.Firmware
     org.gnome.Papers
+    org.gnome.World.PikaBackup
+    org.telegram.desktop
     sh.loft.devpod
   )
 
@@ -282,6 +288,147 @@ virt_install() {
   has_cmd authselect && sudo authselect enable-feature with-libvirt
 }
 
+gnome-extensions_install() {
+  if ! has_cmd gext; then
+    has_cmd pipx || {
+      error "pipx not found, skipping gnome extensions"
+      return 1
+    }
+    pipx install gnome-extensions-cli --system-site-packages
+  fi
+
+  if ! has_cmd gext; then
+    warn "gext not found, skipping gnome extensions"
+    return 1
+  fi
+
+  local -a extensions=(
+    "AlphabeticalAppGrid@stuarthayhurst"
+    "blur-my-shell@aunetx"
+    "extension-list@tu.berry"
+    "just-perfection-desktop@just-perfection"
+    "openbar@neuromorph"
+    "paperwm@paperwm.github.com"
+    "search-light@icedman.github.com"
+    "switcher@landau.fi"
+    "windowsNavigator@gnome-shell-extensions.gcampax.github.com"
+  )
+
+  local -a optional=(
+    "tilingshell@ferrarodomenico.com"
+  )
+
+  for ext in "${extensions[@]}"; do
+    gext install "$ext"
+    gext enable "$ext"
+  done
+  for ext in "${optional[@]}"; do
+    gext install "$ext"
+    gext disable "$ext"
+  done
+}
+
+gnome-flatpaks_install() {
+  local -a flatpaks=(
+    com.mattjakeman.ExtensionManager
+    org.gtk.Gtk3theme.adw-gtk3
+    org.gtk.Gtk3theme.adw-gtk3-dark
+    org.gnome.Logs
+    io.github.swordpuffin.rewaita
+    io.missioncenter.MissionCenter
+    app.devsuite.Ptyxis
+  )
+  for pkg in "${flatpaks[@]}"; do
+    flatpak --user install -y flathub "$pkg"
+  done
+}
+
+gnome-settings_install() {
+
+  gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+  gsettings set org.gnome.desktop.input-sources xkb-options "['caps:ctrl_modifier']"
+
+  # gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+  gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
+  gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Classic'
+  gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+
+  gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
+  gsettings set org.gnome.desktop.interface accent-color 'teal'
+
+  gsettings set org.gnome.mutter dynamic-workspaces false
+  gsettings set org.gnome.desktop.wm.preferences num-workspaces 4
+
+  gsettings set org.gnome.desktop.interface monospace-font-name 'JetbrainsMono Nerd Font 11'
+}
+
+gnome-keybindings_install() {
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/close-window "['<Super>BackSpace', '<Super>q']"
+
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-right "['<Super>Right']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-left "['<Super>Left']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-up "['<Super>Up']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-down "['<Super>Down']"
+
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-up-workspace "['<Super>Page_Up', '<Super><Control>Left']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-down-workspace "['<Super>Page_Down', '<Super><Control>Right']"
+
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-up "['<Shift><Super>Up']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-up-workspace "['<Shift><Super>Page_Up']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-down "['<Shift><Super>Down']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-down-workspace "['<Shift><Super>Page_Down']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-left "['<Shift><Super>Left']"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-right "['<Shift><Super>Right']"
+
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/new-window "['<Super>n']"
+
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-monitor-above "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-monitor-below "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-monitor-left "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-monitor-right "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-space-monitor-above "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-space-monitor-below "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-space-monitor-left "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/move-space-monitor-right "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/open-window-position-down "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/open-window-position-left "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/swap-monitor-above "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/swap-monitor-below "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/swap-monitor-left "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/swap-monitor-right "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-monitor-above "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-monitor-below "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-monitor-left "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-monitor-right "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-next "@as []"
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/switch-previous "@as []"
+
+  dconf write /org/gnome/shell/extensions/paperwm/keybindings/show-window-position-bar false
+
+  dconf write /org/gnome/desktop/wm/keybindings/show-desktop "@as []"
+
+  dconf write /org/gnome/desktop/wm/preferences/num-workspaces 4
+  dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-1 "['<Super>1']"
+  dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-2 "['<Super>2']"
+  dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-3 "['<Super>3']"
+  dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-4 "['<Super>4']"
+  dconf write /org/gnome/desktop/wm/preferences/workspace-names "['1', '2', '3', '4']"
+
+  dconf write /org/gnome/shell/extensions/blur-my-shell/panel/blur "false"
+
+  # Search Light keybindings
+  dconf write /org/gnome/shell/extensions/search-light/primary-shortcut-search "['<Super>d']"
+  dconf write /org/gnome/shell/extensions/search-light/secondary-shortcut-search "['<Super>Space']"
+}
+
+gnome_install() {
+
+  gnome-extensions_install
+  gnome-keybindings_install
+  gnome-settings_install
+  gnome-flatpaks_install
+}
+
 setup-desktop() {
   local -a whiptail_items=(
     "system" "Install desktop system packages" "on"
@@ -291,6 +438,10 @@ setup-desktop() {
     "virt" "Install virt-manager" "off"
     "zed" "Install zed" "off"
   )
+
+  if is_gnome; then
+    whiptail_items+=("gnome" "Configure gnome desktop" "on")
+  fi
 
   if is_fedora || is_questing || is_pikaos || is_tw || is_arch; then
     whiptail_items+=("niri" "Install niri" "off")

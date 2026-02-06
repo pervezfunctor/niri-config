@@ -69,6 +69,14 @@
     [ -f /etc/os-release ] && grep -q 'Ubuntu' /etc/os-release 2>/dev/null
   }
 
+  is_gnome() {
+    [ "$XDG_CURRENT_DESKTOP" = "GNOME" ] || [ "$XDG_SESSION_DESKTOP" = "gnome" ]
+  }
+
+  is_fedora-atomic() {
+    has_cmd rpm-ostree
+  }
+
   prompt_yn() {
     local prompt="$1"
     local response
