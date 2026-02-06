@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+PTYXIS_PATH="/org/gnome/Ptyxis/Profiles/"
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <command>
+
+Commands:
+  profiles              List available Ptyxis profiles and default UUID
+  set-palette [name]    Set Ptyxis palette for default profile (default: Github)
+
+Examples:
+  $(basename "$0") profiles              # List Ptyxis profiles
+  $(basename "$0") set-palette Github   # Set palette to Github
+  $(basename "$0") set-palette Dracula  # Set palette to Dracula
+EOF
+  exit 1
+}
+
+get_ptyxis_uuid() {
+  local uuid
+  uuid=$(dconf read /org/gnome/Ptyxis/profiles/default 2>/dev/null)
+  if [[ -z "$uuid" ]]; then
+    echo "Error: Could not read default Ptyxis profile" >&2
+    return 1
+  fi
+  # Remove surrounding brackets from dconf format
+  uuid="${uuid//\[}"
+  uuid="${uuid//\]}"
+  echo "$uuid"
+}
+
+cmd_profiles() {
+  echo "Available Ptyxis profiles:"
+  dconf list "$PTYXIS_PATH" | grep -E '^/' | tr -d '/'
+  echo ""
+  local default_uuid
+  default_uuid=$(get_ptyxis_uuid)
+  echo "Default profile UUID: $default_uuid"
+}
+
+cmd_set_palette() {
+  local palette="${1:-Github}"
+  local uuid
+  uuid=$(get_ptyxis_uuid)
+  if [[ -z "$uuid" ]]; then
+    exit 1
+  fi
+  echo "Setting Ptyxis palette to '$palette' for profile: $uuid"
+  dconf write "${PTYXIS_PATH}${uuid}/palette" "'${palette}'"
+  echo "Done."
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+  usage
+fi
+
+case "$1" in
+profiles)
+  cmd_profiles
+  ;;
+set-palette)
+  shift
+  cmd_set_palette "$@"
+  ;;
+-h | --help | help)
+  usage
+  ;;
+*)
+  echo "Error: Unknown command: $1" >&2
+  usage
+  ;;
+esac

@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_KEYBINDINGS_FILE="${SCRIPT_DIR}/paperwm-keybindings.txt"
+PAPERWM_PATH="/org/gnome/shell/extensions/paperwm/"
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") <command>
+
+Commands:
+  read [file]    Export PaperWM settings to file (default: paperwm-keybindings.txt)
+  write [file]   Import PaperWM settings from file (default: paperwm-keybindings.txt)
+  list           List current PaperWM settings
+  reset          Reset all PaperWM settings to defaults
+  diff [file]    Show differences between current settings and file
+
+Examples:
+  $(basename "$0") read              # Export to paperwm-keybindings.txt
+  $(basename "$0") read custom.txt   # Export to custom.txt
+  $(basename "$0") write             # Import from paperwm-keybindings.txt
+  $(basename "$0") write custom.txt  # Import from custom.txt
+  $(basename "$0") list              # Show current settings
+  $(basename "$0") reset             # Reset to defaults
+  $(basename "$0") diff              # Show differences from default file
+EOF
+  exit 1
+}
+
+check_paperwm() {
+  if ! dconf list "$PAPERWM_PATH" &>/dev/null; then
+    echo "Error: PaperWM extension not found at: $PAPERWM_PATH" >&2
+    echo "Please ensure PaperWM is installed and active." >&2
+    exit 1
+  fi
+}
+
+cmd_read() {
+  local output_file="${1:-$DEFAULT_KEYBINDINGS_FILE}"
+  check_paperwm
+  echo "Exporting PaperWM settings to: $output_file"
+  dconf dump "$PAPERWM_PATH" >"$output_file"
+  echo "Done. $(wc -l <"$output_file") lines written."
+}
+
+cmd_write() {
+  local input_file="${1:-$DEFAULT_KEYBINDINGS_FILE}"
+  if [[ ! -f "$input_file" ]]; then
+    echo "Error: File not found: $input_file" >&2
+    exit 1
+  fi
+  echo "Importing PaperWM settings from: $input_file"
+  dconf load "$PAPERWM_PATH" <"$input_file"
+  echo "Settings applied successfully."
+}
+
+cmd_list() {
+  check_paperwm
+  echo "Current PaperWM settings at $PAPERWM_PATH:"
+  echo "----------------------------------------"
+  dconf dump "$PAPERWM_PATH"
+  echo "----------------------------------------"
+}
+
+cmd_reset() {
+  echo "Resetting PaperWM settings at $PAPERWM_PATH..."
+  dconf reset -f "$PAPERWM_PATH"
+  echo "Settings reset to defaults."
+}
+
+cmd_diff() {
+  local input_file="${1:-$DEFAULT_KEYBINDINGS_FILE}"
+  if [[ ! -f "$input_file" ]]; then
+    echo "Error: File not found: $input_file" >&2
+    exit 1
+  fi
+  check_paperwm
+  echo "Differences between current settings and $input_file:"
+  echo "----------------------------------------"
+  dconf dump "$PAPERWM_PATH" | diff - "$input_file" || true
+  echo "----------------------------------------"
+}
+
+# Main
+if [[ $# -lt 1 ]]; then
+  usage
+fi
+
+case "$1" in
+read)
+  shift
+  cmd_read "$@"
+  ;;
+write)
+  shift
+  cmd_write "$@"
+  ;;
+list)
+  cmd_list
+  ;;
+reset)
+  cmd_reset
+  ;;
+diff)
+  shift
+  cmd_diff "$@"
+  ;;
+-h | --help | help)
+  usage
+  ;;
+*)
+  echo "Error: Unknown command: $1" >&2
+  usage
+  ;;
+esac
