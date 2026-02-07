@@ -4,3 +4,4 @@ dms/
 .venv/
 .ruff_cache/
 .pytest_cache/
+.config/kitty/local.conf

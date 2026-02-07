@@ -148,3 +148,6 @@ alias utlp='systemctl --user stop'
 alias utlr='systemctl --user restart'
 alias utlg='systemctl --user list-units'
 alias utlf='systemctl --user list-units --all --state=failed'
+
+# shellcheck disable=SC1090
+[ -f ~/.localshellrc ] && source ~/.localshellrc

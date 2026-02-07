@@ -22,3 +22,6 @@ compinit
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 
 source "${DOT_DIR}/shellrc"
+
+# shellcheck disable=SC1090
+[ -f ~/.localzshrc ] && source ~/.localzshrc
