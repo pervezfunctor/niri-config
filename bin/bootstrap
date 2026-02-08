@@ -295,6 +295,8 @@
       xcode-select --install
       /usr/sbin/softwareupdate --install-rosetta --agree-to-license
       brew_install
+      brew install wget mas stow newt trash zstd unzip rclone tmux tar tree visual-studio-code
+      exit 0
     fi
 
     is_fedora || is_trixie || is_questing || is_tw || is_arch || is_pikaos || {
