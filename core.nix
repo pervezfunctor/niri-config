@@ -1,5 +1,6 @@
 { pkgs, vars, ... }:
 {
+  services.displayManager.gdm.enable = true;
   hardware.enableRedistributableFirmware = true;
   nixpkgs.config.allowUnfree = true;
 
