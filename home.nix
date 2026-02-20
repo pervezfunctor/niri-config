@@ -4,7 +4,6 @@
   pkgs,
   ...
 }:
-
 {
   home.username = vars.username;
   home.homeDirectory = vars.homeDirectory;
@@ -23,7 +22,7 @@
   home.pointerCursor = {
     package = pkgs.bibata-cursors;
     name = "Bibata-Modern-Ice";
-    size = 32;
+    size = 24;
   };
 
   home.packages = with pkgs; [
@@ -35,6 +34,7 @@
     gdu
     gh
     jq
+    imagemagick
     kitty
     lazygit
     luarocks
@@ -45,8 +45,6 @@
     nufmt
     nushell
     ripgrep
-    shellcheck
-    shfmt
     tealdeer
     tmux
     trash-cli

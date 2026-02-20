@@ -62,16 +62,6 @@
     binfmt = true;
   };
 
-  users.defaultUserShell = pkgs.fish;
-  programs.fish.enable = true;
-  programs.bash.enable = true;
-
-  programs.starship = {
-    enable = true;
-    interactiveOnly = true;
-    transientPrompt.enable = true;
-  };
-
   fonts = {
     fontconfig.enable = true;
     packages = with pkgs; [
@@ -87,7 +77,17 @@
   };
 
   users.extraGroups.video.members = [ vars.username ];
+
+  users.defaultUserShell = pkgs.fish;
+  programs.fish.enable = true;
+  programs.bash.enable = true;
   programs.neovim.enable = true;
+
+  programs.starship = {
+    enable = true;
+    interactiveOnly = true;
+    transientPrompt.enable = true;
+  };
 
   environment.systemPackages = with pkgs; [
     adwaita-fonts
@@ -97,14 +97,9 @@
     curl
     dbus
     dnsmasq
-    fprintd
     gcc
     git
     gnumake
-    kdePackages.kimageformats
-    guestfs-tools
-    libosinfo
-    power-profiles-daemon
     udiskie
     udisks2
     unzip
