@@ -1,0 +1,113 @@
+{ pkgs, vars, ... }:
+{
+  hardware.enableRedistributableFirmware = true;
+  nixpkgs.config.allowUnfree = true;
+
+  services.xserver.xkb.options = "caps:ctrl_modifier";
+
+  environment.sessionVariables = {
+    XCURSOR_SIZE = "32";
+    XCURSOR_THEME = "Bibata-Modern-Ice";
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    QT_QPA_PLATFORM = "wayland";
+    QT_QPA_PLATFORMTHEME = "gtk3";
+    QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
+  };
+
+  services.dbus.enable = true;
+  security.polkit.enable = true;
+  services.gnome.gnome-keyring.enable = true;
+  services.udisks2.enable = true;
+  services.gvfs.enable = true;
+  services.tumbler.enable = true;
+  programs.thunar.enable = true;
+  programs.xfconf.enable = true;
+
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-gnome
+    ];
+  };
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+  };
+
+  nix = {
+    settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      auto-optimise-store = true;
+    };
+    gc = {
+      automatic = true;
+      dates = "daily";
+      options = "--delete-older-than 7d";
+      persistent = true;
+    };
+  };
+
+  programs.nix-ld.enable = true;
+  services.flatpak.enable = true;
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
+  users.defaultUserShell = pkgs.fish;
+  programs.fish.enable = true;
+  programs.bash.enable = true;
+
+  programs.starship = {
+    enable = true;
+    interactiveOnly = true;
+    transientPrompt.enable = true;
+  };
+
+  fonts = {
+    fontconfig.enable = true;
+    packages = with pkgs; [
+      fira-code
+      font-awesome
+      inter
+      inter-nerdfont
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.monaspace
+      noto-fonts
+      noto-fonts-color-emoji
+    ];
+  };
+
+  users.extraGroups.video.members = [ vars.username ];
+  programs.neovim.enable = true;
+
+  environment.systemPackages = with pkgs; [
+    adwaita-fonts
+    adwaita-icon-theme
+    cliphist
+    cmake
+    curl
+    dbus
+    dnsmasq
+    fprintd
+    gcc
+    git
+    gnumake
+    kdePackages.kimageformats
+    guestfs-tools
+    libosinfo
+    power-profiles-daemon
+    udiskie
+    udisks2
+    unzip
+    wget
+    wl-clipboard
+  ];
+}
