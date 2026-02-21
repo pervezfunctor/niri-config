@@ -221,6 +221,8 @@ environment {
   ELECTRON_OZONE_PLATFORM_HINT "auto"
   QT_QPA_PLATFORMTHEME "gtk3"
   QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+  OZONE_PLATFORM "wayland"
+  ELECTRON_OZONE_PLATFORM_HINT "wayland"
 }
 
 // spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
@@ -233,6 +235,7 @@ spawn-sh-at-startup "dms run"
 spawn-at-startup "kitty"
 
 // include "dms/colors.kdl"
+// include "dms/cursor.kdl"
 // include "dms/layout.kdl"
 // include "dms/alttab.kdl"
 // include "dms/binds.kdl"
