@@ -1,4 +1,15 @@
 { pkgs, vars, ... }:
+let
+  shellInit = ''
+    set -gx PATH "$HOME/.volta/bin" "$HOME/.local/bin" "$PATH"
+    # pnpm
+    set -gx PNPM_HOME "/home/pervez/.local/share/pnpm"
+    if not string match -q -- $PNPM_HOME $PATH
+      set -gx PATH "$PNPM_HOME" $PATH
+    end
+    # pnpm end
+  '';
+in
 {
   services.displayManager.gdm.enable = true;
   hardware.enableRedistributableFirmware = true;
@@ -80,9 +91,12 @@
   users.extraGroups.video.members = [ vars.username ];
 
   users.defaultUserShell = pkgs.fish;
-  programs.fish.enable = true;
   programs.bash.enable = true;
   programs.neovim.enable = true;
+  programs.fish = {
+    enable = true;
+    inherit shellInit;
+  };
 
   programs.starship = {
     enable = true;
