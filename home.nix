@@ -50,6 +50,7 @@
     trash-cli
     tree
     tree-sitter
+    volta
     zed-editor
   ];
 
