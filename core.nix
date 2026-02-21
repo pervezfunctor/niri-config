@@ -18,6 +18,7 @@
   services.dbus.enable = true;
   security.polkit.enable = true;
   services.gnome.gnome-keyring.enable = true;
+  security.pam.services.gdm.enableGnomeKeyring = true;
   services.udisks2.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;
@@ -100,6 +101,7 @@
     gcc
     git
     gnumake
+    libsecret
     udiskie
     udisks2
     unzip
