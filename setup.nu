@@ -6,7 +6,11 @@ def main [] {
   let repo_dir = $"($env.HOME)/niri-config"
 
   print $"Cloning repository to ($repo_dir)..."
-  ^nix run nixpkgs#git -- clone $REPO_URL $repo_dir
+  if ($repo_dir | path exists) {
+    print "Repository already exists."
+  } else {
+    ^nix run nixpkgs#git -- clone $REPO_URL $repo_dir
+  }
 
   let username = (whoami | str trim)
   let homeDirectory = ($env.HOME | str trim)
@@ -19,7 +23,7 @@ def main [] {
   homeDirectory = \"($homeDirectory)\";
   hostname = \"($hostname)\";
 }
-" | save $"($repo_dir)/vars.nix"
+" | save -f $"($repo_dir)/vars.nix"
 
   print "Generating NixOS configuration..."
   ^nixos-generate-config --dir $repo_dir
@@ -29,4 +33,9 @@ def main [] {
 
   print "Rebuilding NixOS..."
   ^sudo nixos-rebuild switch --flake $"($repo_dir)#nixos"
+
+  if not (which volta | is-empty) {
+    print "Installing Volta..."
+    ^volta install node@latest
+  }
 }
