@@ -14,6 +14,7 @@ NixOS flake based configuration featuring the Niri Wayland compositor, Home Mana
 - **Shell tools** - eza, fzf, zoxide, direnv, tmux, and more
 - **devenv** - Development environment without devcontainers
 - **volta** - Node.js version manager
+- **librewolf** - Privacy focused, firefox based browser
 
 ## Quick Start
 

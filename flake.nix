@@ -45,7 +45,7 @@
     in
     {
       nixosConfigurations = {
-        nixos =
+        "${vars.hostname}" =
           mkOS
             [
               niriModules.nixosModule
