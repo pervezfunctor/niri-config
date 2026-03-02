@@ -130,3 +130,13 @@ Edit `config.kdl` to customize keybindings, layouts, and window behavior.
 ### Configuring Kitty
 
 Edit `kitty.conf` to customize Kitty terminal emulator settings.
+
+### DMS configuration
+
+This repo does not include DMS configuration. You need to set this up by using 'DMS Settings'. At the minimum configure the following. Use `super/win+comma` shortcut.
+
+- **Power & Sleep**: Setup monitor and system sleep settings
+- **Theme & Colors**: Enable niri/mango layout overrides. Browse themes, install themes and pick one of them. Or use Auto and let matugen handle themes for you. Make sure that Matugen templates are enabled for all your important apps along with GTK, qt5t/qt6ct.
+- **Typography**: Pick JetbrainsMono Nerd Font as monospace font.
+- **Wallpaper**: Download wallpapers from your favorite place like [ml4w](https://github.com/mylinuxforwork/wallpaper) and select one of them.
+- **Displays**: If you have multiple monitors or if you need to select resolution and scale for your monitor.
