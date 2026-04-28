@@ -45,6 +45,8 @@
     nufmt
     nushell
     ripgrep
+    shellcheck
+    shfmt
     tealdeer
     tmux
     trash-cli
