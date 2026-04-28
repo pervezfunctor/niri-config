@@ -50,7 +50,6 @@
             [
               niriModules.nixosModule
               ./configuration.nix
-              ./local.nix
             ]
             [ niriModules.homeModule ];
       };
