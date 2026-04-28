@@ -1,3 +1,12 @@
+// Example output configuration
+// output "HDMI-A-1" {
+//     off
+//     mode "3840x2160@60"
+//     scale 1.5
+//     transform "normal"
+//     position x=0 y=0
+// }
+
 hotkey-overlay {
     skip-at-startup
 }
@@ -16,15 +25,6 @@ input {
     focus-follows-mouse
     workspace-auto-back-and-forth
 }
-
-// Example output configuration
-// output "HDMI-A-1" {
-//     off
-//     mode "3840x2160@60"
-//     scale 1.5
-//     transform "normal"
-//     position x=0 y=0
-// }
 
 layout {
     gaps 8
@@ -228,10 +228,7 @@ environment {
 // spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
 // spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets,ssh,pkcs11"
 spawn-sh-at-startup "wl-paste --watch cliphist store"
-
 spawn-sh-at-startup "dms run"
-
-// Useful for troubleshooting.
 spawn-at-startup "kitty"
 
 // include "dms/colors.kdl"
