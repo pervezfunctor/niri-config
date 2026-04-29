@@ -30,6 +30,7 @@ in
   security.polkit.enable = true;
   services.gnome.gnome-keyring.enable = true;
   security.pam.services.gdm.enableGnomeKeyring = true;
+  security.pam.services.login.enableGnomeKeyring = true;
   services.udisks2.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;
@@ -105,6 +106,8 @@ in
     transientPrompt.enable = true;
   };
 
+  services.passSecretService.enable = true;
+
   environment.systemPackages = with pkgs; [
     adwaita-fonts
     adwaita-icon-theme
@@ -114,6 +117,7 @@ in
     dbus
     dnsmasq
     gcc
+    gcr
     git
     gnumake
     libsecret
