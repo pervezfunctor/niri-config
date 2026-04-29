@@ -4,7 +4,7 @@ const REPO_URL = "https://github.com/pervezfunctor/niri-config.git"
 let DOT_DIR = $"($env.HOME)/.niri-config"
 
 def prompt_yn [message: string] {
-  let response = (input $"($message) (y/N): " | str trim | str downcase)
+  let response = (input $"($message) [y/N]: " | str trim | str downcase)
   $response == "y" or $response == "yes"
 }
 

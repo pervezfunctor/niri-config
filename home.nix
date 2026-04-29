@@ -110,5 +110,9 @@
       source = ./kitty.conf;
       force = true;
     };
+    ".config/tmux/tmux.conf" = {
+      source = ./tmux.conf;
+      force = true;
+    };
   };
 }
