@@ -1,13 +1,7 @@
 { pkgs, vars, ... }:
 let
   shellInit = ''
-    set -gx PATH "$HOME/.volta/bin" "$HOME/.local/bin" "$PATH"
-    # pnpm
-    set -gx PNPM_HOME "/home/pervez/.local/share/pnpm"
-    if not string match -q -- $PNPM_HOME $PATH
-      set -gx PATH "$PNPM_HOME" $PATH
-    end
-    # pnpm end
+    set -gx PATH "$HOME/.local/bin" "$PATH"
   '';
 in
 {

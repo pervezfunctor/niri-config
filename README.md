@@ -13,7 +13,6 @@ NixOS flake based configuration featuring the Niri Wayland compositor, Home Mana
 - **Zed** - GPU-accelerated text editor
 - **Shell tools** - eza, fzf, zoxide, direnv, tmux, and more
 - **devenv** - Development environment without devcontainers
-- **volta** - Node.js version manager
 - **librewolf** - Privacy focused, firefox based browser
 
 ## Quick Start
@@ -29,7 +28,7 @@ rm setup.nu
 ```
 
 This will:
-1. Clone the repository to `~/niri-config`
+1. Clone the repository to `~/.niri-config`
 2. Generate `vars.nix` with your username, home directory, and hostname
 3. Copy/Generate hardware and system configuration files from `/etc/nixos`
 4. Add files to git
@@ -38,12 +37,12 @@ This will:
 ### Manual Setup
 
 ```bash
-git clone https://github.com/pervezfunctor/niri-config.git ~/niri-config.git
-cd ~/niri-config
+git clone https://github.com/pervezfunctor/niri-config.git ~/.niri-config.git
+cd ~/.niri-config
 cp /etc/nixos/* .
 ```
 
-Create and edit `vars.nix` in `~/niri-config` with your username, home directory, and hostname. It should look like this:
+Create and edit `vars.nix` in `~/.niri-config` with your username, home directory, and hostname. It should look like this:
 
 ```nix
 {
@@ -95,7 +94,7 @@ For installing on a different system, change references to current repository in
 Running in a vm could be painfully slow, use it only for testing before actually installing it your system.
 
 ```bash
-cd ~/niri-config
+cd ~/.niri-config
 nu vm.nu
 nu vm.nu --clean  # Remove qcow2 image
 ```
