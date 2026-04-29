@@ -45,5 +45,7 @@ def main [] {
     print "Rebuild NixOS with 'nixos-rebuild switch --flake ($DOT_DIR)#' when you're ready."
   }
 
+  mkdir ~/Pictures/Screenshots
+
   print "Setup complete!"
 }

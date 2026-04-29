@@ -1,9 +1,4 @@
 { pkgs, vars, ... }:
-let
-  shellInit = ''
-    set -gx PATH "$HOME/.local/bin" "$PATH"
-  '';
-in
 {
   services.displayManager.gdm.enable = true;
   hardware.enableRedistributableFirmware = true;
@@ -20,11 +15,14 @@ in
     QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
   };
 
-  services.dbus.enable = true;
+  security.rtkit.enable = true;
   security.polkit.enable = true;
-  services.gnome.gnome-keyring.enable = true;
   security.pam.services.gdm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
+
+  services.dbus.enable = true;
+  services.gnome.gnome-keyring.enable = true;
+
   services.udisks2.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;
@@ -35,16 +33,22 @@ in
     enable = true;
     wlr.enable = true;
     extraPortals = [
-      pkgs.xdg-desktop-portal-wlr
       pkgs.xdg-desktop-portal-gtk
       pkgs.xdg-desktop-portal-gnome
     ];
+    config = {
+      common = {
+        default = [ "gnome" ];
+      };
+    };
   };
 
   services.pipewire = {
     enable = true;
     alsa.enable = true;
     pulse.enable = true;
+    jack.enable = false;
+    wireplumber.enable = true;
   };
 
   nix = {
@@ -91,7 +95,15 @@ in
   programs.neovim.enable = true;
   programs.fish = {
     enable = true;
-    inherit shellInit;
+    shellInit = ''
+      set -gx PATH "$HOME/.local/bin" "$PATH"
+    '';
+    shellAliases = {
+      gst = "git status";
+      gcm = "git commit";
+      gp = "git push";
+      gfm = "git fetch";
+    };
   };
 
   programs.starship = {
