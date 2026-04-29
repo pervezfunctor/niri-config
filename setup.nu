@@ -4,8 +4,7 @@ const REPO_URL = "https://github.com/pervezfunctor/niri-config.git"
 let DOT_DIR = $"($env.HOME)/.niri-config"
 
 def prompt_yn [message: string] {
-  print --no-newline $"($message) \(y/N\)?"
-  let response  = (input | str trim | str downcase)
+  let response = (input $"($message) (y/N): " | str trim | str downcase)
   $response == "y" or $response == "yes"
 }
 
@@ -29,7 +28,9 @@ def main [] {
 
   if not ($DOT_DIR | path join "configuration.nix" | path exists) {
     print "Copying NixOS configuration..."
-    ^cp /etc/nixos/* $DOT_DIR
+    for file in (glob /etc/nixos/*) {
+      cp $file $DOT_DIR
+    }
   }
 
   if ($DOT_DIR | path join ".git" | path exists) {
