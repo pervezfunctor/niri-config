@@ -100,9 +100,12 @@
     '';
     shellAliases = {
       gst = "git status";
-      gcm = "git commit";
+      gcm = "git commit -m";
       gp = "git push";
-      gfm = "git fetch";
+      gfm = "git pull";
+      gia = "git add .";
+      gcb = "git checkout -b";
+      nrs = "sudo nixos-rebuild switch --flake .#";
     };
   };
 
