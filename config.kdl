@@ -53,6 +53,71 @@ window-rule {
     open-floating true
 }
 
+layer-rule {
+    match namespace="^quickshell$"
+    place-within-backdrop true
+}
+
+layer-rule {
+    match namespace="dms:blurwallpaper"
+    place-within-backdrop true
+}
+
+window-rule {
+    match is-active=false
+    opacity 0.97
+    background-effect {
+        blur true
+    }
+}
+
+window-rule {
+    match app-id=r#"org.quickshell$"#
+    open-floating true
+}
+
+window-rule {
+    match app-id="^(code)$"
+    default-column-width { proportion 0.6667; }
+}
+
+window-rule {
+    match app-id="^(app.zen_browser.zen)$"
+    background-effect {
+        blur true
+    }
+}
+
+window-rule {
+    match app-id="org.telegram.desktop"
+    default-column-width { proportion 0.20; }
+}
+
+window-rule {
+    match app-id="^(kitty.*)$"
+    default-column-width { proportion 0.333; }
+    background-effect {
+        blur true
+    }
+}
+
+window-rule {
+    match app-id="^(dev.zed.Zed)$"
+    default-column-width { proportion 0.6667; }
+    background-effect {
+        blur true
+    }
+}
+
+window-rule {
+    match app-id="scratch-terminal"
+    open-floating true
+    open-maximized false
+    open-fullscreen false
+    default-column-width { proportion 0.35; }
+    default-window-height { proportion 0.20;}
+}
+
 // Example: block out two password managers from screen capture.
 // (This example rule is commented out with a "/-" in front.)
 /-window-rule {
@@ -67,6 +132,23 @@ window-rule {
     geometry-corner-radius 20
     clip-to-geometry true
 }
+
+// layer-rule {
+//     match namespace="^swww-daemon$"
+//     place-within-backdrop true
+// }
+
+// window-rule {
+//     match app-id=r#"^org\.gnome\."#
+//     draw-border-with-background false
+//     geometry-corner-radius 12
+//     clip-to-geometry true
+// }
+
+// window-rule {
+//     match app-id="^(virt-manager.*)$"
+//     open-floating true
+// }
 
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
@@ -88,20 +170,21 @@ binds {
     Mod+Shift+Up    { move-window-up; }
     Mod+Shift+Right { move-column-right; }
 
-    Mod+J     { focus-window-or-workspace-down; }
-    Mod+K     { focus-window-or-workspace-up; }
+    Mod+J           { focus-window-or-workspace-down; }
+    Mod+K           { focus-window-or-workspace-up; }
     Mod+Shift+J     { move-window-down-or-to-workspace-down; }
     Mod+Shift+K     { move-window-up-or-to-workspace-up; }
 
-    Mod+Home { focus-column-first; }
-    Mod+End  { focus-column-last; }
-    Mod+Shift+Home { move-column-to-first; }
-    Mod+Shift+End  { move-column-to-last; }
+    Mod+Home        { focus-column-first; }
+    Mod+End         { focus-column-last; }
+    Mod+Shift+Home  { move-column-to-first; }
+    Mod+Shift+End   { move-column-to-last; }
 
     Mod+Page_Down      { focus-workspace-down; }
     Mod+Page_Up        { focus-workspace-up; }
     Mod+U              { focus-workspace-down; }
     Mod+I              { focus-workspace-up; }
+
     Mod+Shift+Page_Down { move-column-to-workspace-down; }
     Mod+Shift+Page_Up   { move-column-to-workspace-up; }
     Mod+Shift+U         { move-column-to-workspace-down; }
@@ -136,6 +219,7 @@ binds {
     Mod+7 { focus-workspace 7; }
     Mod+8 { focus-workspace 8; }
     Mod+9 { focus-workspace 9; }
+
     Mod+Ctrl+1 { move-column-to-workspace 1; }
     Mod+Ctrl+2 { move-column-to-workspace 2; }
     Mod+Ctrl+3 { move-column-to-workspace 3; }
@@ -151,22 +235,21 @@ binds {
     Mod+BracketLeft  { consume-or-expel-window-left; }
     Mod+BracketRight { consume-or-expel-window-right; }
 
-    Mod+R { switch-preset-column-width; }
+    Mod+R       { switch-preset-column-width; }
     Mod+Shift+R { switch-preset-window-height; }
-    Mod+Ctrl+R { reset-window-height; }
+    Mod+Ctrl+R  { reset-window-height; }
     Mod+Shift+F { maximize-column; }
-    Mod+F { fullscreen-window; }
-    Mod+Ctrl+F { expand-column-to-available-width; }
+    Mod+F       { fullscreen-window; }
+    Mod+Ctrl+F  { expand-column-to-available-width; }
+    Mod+C       { center-column; }
+    Mod+Ctrl+C  { center-visible-columns; }
 
-    Mod+C { center-column; }
-    Mod+Ctrl+C { center-visible-columns; }
-
-    Print { screenshot; }
-    Ctrl+Print { screenshot-screen; }
-    Alt+Print { screenshot-window; }
+    Print       { screenshot; }
+    Ctrl+Print  { screenshot-screen; }
+    Alt+Print   { screenshot-window; }
 
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
-    Mod+Shift+E { quit; }
+    Mod+Shift+E     { quit; }
     Ctrl+Alt+Delete { quit; }
 
     Mod+Minus       { set-column-width "-10%"; }
@@ -178,6 +261,10 @@ binds {
     Mod+Shift+T { switch-focus-between-floating-and-tiling; }
     Mod+W       { toggle-column-tabbed-display; }
     Mod+Shift+P { power-off-monitors; }
+
+    Mod+Shift+Return hotkey-overlay-title="Scratch Terminal" {
+        spawn-sh "FISH_SIMPLE=1 kitty --class scratch-terminal";
+    }
 
     Mod+Space hotkey-overlay-title="Application Launcher" {
         spawn "dms" "ipc" "call" "spotlight" "toggle";
