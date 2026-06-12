@@ -1,9 +1,10 @@
 { pkgs, vars, ... }:
 {
-  services.displayManager.cosmic-greeter.enable = true;
+  services.displayManager.plasma-login-manager.enable = true;
   hardware.enableRedistributableFirmware = true;
   nixpkgs.config.allowUnfree = true;
 
+  services.xserver.enable = true;
   services.xserver.xkb.options = "caps:ctrl_modifier";
 
   environment.sessionVariables = {
@@ -17,7 +18,7 @@
 
   security.rtkit.enable = true;
   security.polkit.enable = true;
-  security.pam.services.gdm.enableGnomeKeyring = true;
+  # security.pam.services.gdm.enableGnomeKeyring = true;
   security.pam.services.login.enableGnomeKeyring = true;
 
   services.dbus.enable = true;
