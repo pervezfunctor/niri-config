@@ -1,6 +1,6 @@
 { pkgs, vars, ... }:
 {
-  services.displayManager.gdm.enable = true;
+  services.displayManager.cosmic-greeter.enable = true;
   hardware.enableRedistributableFirmware = true;
   nixpkgs.config.allowUnfree = true;
 
