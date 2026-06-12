@@ -133,23 +133,6 @@ window-rule {
     clip-to-geometry true
 }
 
-// layer-rule {
-//     match namespace="^swww-daemon$"
-//     place-within-backdrop true
-// }
-
-// window-rule {
-//     match app-id=r#"^org\.gnome\."#
-//     draw-border-with-background false
-//     geometry-corner-radius 12
-//     clip-to-geometry true
-// }
-
-// window-rule {
-//     match app-id="^(virt-manager.*)$"
-//     open-floating true
-// }
-
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
