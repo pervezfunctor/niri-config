@@ -1,10 +1,10 @@
 { pkgs, vars, ... }:
 {
-  services.displayManager.plasma-login-manager.enable = true;
+  services.displayManager.cosmic-greeter.enable = true;
+  programs.xwayland.enable = true;
   hardware.enableRedistributableFirmware = true;
   nixpkgs.config.allowUnfree = true;
 
-  services.xserver.enable = true;
   services.xserver.xkb.options = "caps:ctrl_modifier";
 
   environment.sessionVariables = {
