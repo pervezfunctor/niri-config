@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+print-help() {
+  cat <<EOF
+
+Usage:  vm.sh [target] [--clean]
+
+If no target provided, shows interactive picker.
+Target names are automatically appended with '-vm'.
+
+Options:
+  -c, --clean    Remove ./<target>-vm.qcow2 before building
+  -h, --help     Show this help
+
+EOF
+}
+
+get-vm-targets() {
+  local system="x86_64-linux"
+  local output
+  output=$(nix eval ".#packages.${system}" --json --apply "pkgs: builtins.attrNames pkgs" 2>/dev/null) || return 1
+  echo "$output" | jq -r '.[] | select(endswith("-vm"))' 2>/dev/null || true
+}
+
+parse-args() {
+  target=""
+  clean=false
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        print-help
+        exit 0
+        ;;
+      -c|--clean)
+        clean=true
+        shift
+        ;;
+      *)
+        if [[ -z "$target" ]]; then
+          target="$1"
+        else
+          echo "Error: Unexpected argument '$1'" >&2
+          print-help
+          exit 1
+        fi
+        shift
+        ;;
+    esac
+  done
+}
+
+pick-target() {
+  local -a vm_targets=()
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && vm_targets+=("$line")
+  done < <(get-vm-targets || true)
+
+  if [[ ${#vm_targets[@]} -eq 0 ]]; then
+    echo "Error: No VM targets found in flake" >&2
+    exit 1
+  fi
+
+  if [[ ${#vm_targets[@]} -eq 1 ]]; then
+    target="${vm_targets[0]}"
+    return
+  fi
+
+  echo "Select target:"
+  if command -v fzf &>/dev/null; then
+    target=$(printf "%s\n" "${vm_targets[@]}" | fzf --prompt="Select target: ") || {
+      echo "No target selected." >&2
+      exit 1
+    }
+  else
+    select sel in "${vm_targets[@]}"; do
+      if [[ -n "$sel" ]]; then
+        target="$sel"
+        break
+      fi
+      echo "Invalid selection. Try again."
+    done
+  fi
+}
+
+ensure-vm-suffix() {
+  if [[ "$target" != *-vm ]]; then
+    target="${target}-vm"
+  fi
+}
+
+clean-disk() {
+  local qcow="./${target}.qcow2"
+  if $clean && [[ -f "$qcow" ]]; then
+    echo "Removing ${qcow}"
+    rm -f "$qcow"
+  fi
+}
+
+build-vm() {
+  echo "Building target ${target}..."
+  nix build ".#${target}"
+}
+
+run-vm() {
+  echo "Running target ${target}..."
+  nix run ".#${target}"
+}
+
+main() {
+  target=""
+  clean=false
+
+  parse-args "$@"
+
+  if [[ "$target" == "help" ]]; then
+    print-help
+    exit 0
+  fi
+
+  if [[ -z "$target" ]]; then
+    pick-target
+  else
+    ensure-vm-suffix
+  fi
+
+  echo "Using target: ${target}"
+  clean-disk
+  build-vm
+  run-vm
+}
+
+main "$@"

@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_URL="https://github.com/pervezfunctor/niri-config.git"
+DOT_DIR="$HOME/.niri-config"
+
+prompt_yn() {
+  local message="$1"
+  read -r -p "$message [y/N]: " response
+  [[ "$response" =~ ^[Yy](es)?$ ]]
+}
+
+cmd_check() {
+  if ! command -v "$1" &>/dev/null; then
+    echo "Error: '$1' is required but not found in PATH."
+    exit 1
+  fi
+}
+
+dir_exists() {
+  [[ -d "$1" ]]
+}
+
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly RED='\033[0;31m'
+readonly NC='\033[0m'
+
+log() {
+  echo -e "${GREEN}$1${NC}"
+}
+
+warn() {
+  echo -e "${YELLOW}$1${NC}"
+}
+
+die() {
+  echo -e "${RED}Error: $1${NC}"
+  exit 1
+}
+
+completion_info() {
+  echo ""
+  echo "Setup complete!"
+  echo ""
+  echo "Next steps:"
+  echo "  - Review and edit $DOT_DIR/vars.nix"
+  echo "  - Review and edit $DOT_DIR/configuration.nix"
+  echo "  - Run: sudo nixos-rebuild switch --flake $DOT_DIR#$(hostname)"
+  echo ""
+}
+
+check_prerequisites() {
+  cmd_check git
+
+  if dir_exists "$DOT_DIR"; then
+    warn "Repository already exists at $DOT_DIR. Skipping clone."
+    return 0
+  fi
+
+  echo "Cloning repository to $DOT_DIR..."
+  git clone "$REPO_URL" "$DOT_DIR" || die "Error: Failed to clone repository."
+}
+
+main() {
+  if [[ ! -f "$DOT_DIR/vars.nix" ]]; then
+    username=$(whoami)
+    homeDirectory="$HOME"
+    host=$(hostname)
+
+    echo "Generating vars.nix..."
+    cat > "$DOT_DIR/vars.nix" <<EOF
+  {
+  username = "$username";
+  homeDirectory = "$homeDirectory";
+  hostname = "$host";
+  }
+EOF
+    echo "vars.nix generated for user '$username' on host '$host'."
+  else
+    warn "vars.nix already exists, skipping generation."
+  fi
+
+  if [[ ! -f "$DOT_DIR/configuration.nix" ]]; then
+    if [[ -d /etc/nixos && "$(ls -A /etc/nixos/ 2>/dev/null)" ]]; then
+      echo "Copying NixOS configuration from /etc/nixos..."
+      cp -r /etc/nixos/* "$DOT_DIR"
+    else
+      die "/etc/nixos is empty or does not exist. Skipping configuration copy."
+    fi
+  fi
+
+  if [[ -n "$(git -C "$DOT_DIR" status --porcelain 2>/dev/null)" ]]; then
+    echo "Staging changes..."
+    git -C "$DOT_DIR" add -A
+  else
+    echo "No changes to stage."
+  fi
+
+  mkdir -p "$HOME/Pictures/Screenshots"
+
+  # let's prompt first
+  if prompt_yn "Rebuild NixOS configuration?"; then
+    echo "Running sudo nixos-rebuild switch..."
+    sudo nixos-rebuild switch --flake "$DOT_DIR#$(hostname)"
+  else
+    echo "Skipping NixOS rebuild."
+  fi
+
+  completion_info
+}
+
+main

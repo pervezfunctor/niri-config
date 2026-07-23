@@ -42,8 +42,6 @@
     nil
     nixd
     nixfmt
-    nufmt
-    nushell
     ripgrep
     shellcheck
     shfmt
@@ -59,49 +57,42 @@
     home-manager.enable = true;
 
     librewolf.enable = true;
-    nushell = {
-      enable = true;
-      plugins = [ pkgs.nushellPlugins.formats ];
-      settings = {
-        show_banner = false;
-      };
-    };
 
     eza = {
       enable = true;
       enableFishIntegration = true;
-      enableNushellIntegration = true;
+      enableZshIntegration = true;
     };
 
     starship = {
       enable = true;
       enableFishIntegration = true;
       enableZshIntegration = true;
-      enableNushellIntegration = true;
     };
 
     carapace = {
       enable = true;
       enableFishIntegration = true;
-      enableNushellIntegration = true;
+      enableZshIntegration = true;
     };
 
     fzf = {
       enable = true;
       enableFishIntegration = true;
+      enableZshIntegration = true;
     };
 
     zoxide = {
       enable = true;
       enableFishIntegration = true;
-      enableNushellIntegration = true;
+      enableZshIntegration = true;
     };
 
     direnv = {
       enable = true;
       nix-direnv.enable = true;
       enableFishIntegration = true;
-      enableNushellIntegration = true;
+      enableZshIntegration = true;
     };
   };
 

@@ -45,6 +45,7 @@
     in
     {
       nixosConfigurations = {
+        "dev" = mkOS [ ./configuration.nix ];
         "${vars.hostname}" =
           mkOS
             [
