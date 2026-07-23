@@ -11,6 +11,10 @@ prompt_yn() {
   [[ "$response" =~ ^[Yy](es)?$ ]]
 }
 
+nix_git() {
+  nix --experimental-features 'nix-command flakes' run "nixpkgs#git" -- "$@"
+}
+
 cmd_check() {
   if ! command -v "$1" &>/dev/null; then
     echo "Error: '$1' is required but not found in PATH."
@@ -52,7 +56,8 @@ completion_info() {
 }
 
 check_prerequisites() {
-  cmd_check git
+  cmd_check nix
+  cmd_check nixos-rebuild
 
   if dir_exists "$DOT_DIR"; then
     warn "Repository already exists at $DOT_DIR. Skipping clone."
@@ -60,7 +65,7 @@ check_prerequisites() {
   fi
 
   echo "Cloning repository to $DOT_DIR..."
-  git clone "$REPO_URL" "$DOT_DIR" || die "Error: Failed to clone repository."
+  $GIT clone "$REPO_URL" "$DOT_DIR" || die "Error: Failed to clone repository."
 }
 
 generate_vars() {
@@ -85,9 +90,9 @@ EOF
 }
 
 stage_changes() {
-  if [[ -n "$(git -C "$DOT_DIR" status --porcelain 2>/dev/null)" ]]; then
+  if [[ -n "$($GIT -C "$DOT_DIR" status --porcelain 2>/dev/null)" ]]; then
     echo "Staging changes..."
-    git -C "$DOT_DIR" add '*.nix' 'flake.lock'
+    $GIT -C "$DOT_DIR" add '*.nix' 'flake.lock'
   else
     echo "No changes to stage."
   fi
@@ -159,6 +164,16 @@ parse_args() {
 }
 
 main() {
+  if ! command -v git &>/dev/null; then
+    if command -v nix &>/dev/null; then
+      GIT="nix_git"
+    else
+      die "git not found in PATH and nix is also not available."
+    fi
+  else
+    GIT="git"
+  fi
+
   NO_REBUILD=0
   NO_VARS=0
   NO_CONFIGURATION=0
