@@ -36,7 +36,7 @@ This will:
 ### Manual Setup
 
 ```bash
-git clone https://github.com/pervezfunctor/niri-config.git ~/.niri-config.git
+git clone https://github.com/pervezfunctor/niri-config.git ~/.niri-config
 cd ~/.niri-config
 cp /etc/nixos/* .
 ```

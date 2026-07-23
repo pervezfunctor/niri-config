@@ -36,7 +36,6 @@
           specialArgs = { inherit inputs vars homeImports; };
 
           modules = osModules ++ [
-            ./vm-config.nix
             ./core.nix
             home-manager.nixosModules.home-manager
             ./homeModule.nix
@@ -45,12 +44,13 @@
     in
     {
       nixosConfigurations = {
-        "dev" = mkOS [ ./configuration.nix ];
+        "dev" = mkOS [ ./configuration.nix ] [];
         "${vars.hostname}" =
           mkOS
             [
               niriModules.nixosModule
               ./configuration.nix
+              ./vm-config.nix
               ./local.nix
             ]
             [ niriModules.homeModule ];

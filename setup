@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 REPO_URL="https://github.com/pervezfunctor/niri-config.git"
@@ -62,52 +63,123 @@ check_prerequisites() {
   git clone "$REPO_URL" "$DOT_DIR" || die "Error: Failed to clone repository."
 }
 
-main() {
+generate_vars() {
   if [[ ! -f "$DOT_DIR/vars.nix" ]]; then
     username=$(whoami)
     homeDirectory="$HOME"
     host=$(hostname)
 
     echo "Generating vars.nix..."
-    cat > "$DOT_DIR/vars.nix" <<EOF
-  {
+    cat >"$DOT_DIR/vars.nix" <<EOF
+{
   username = "$username";
   homeDirectory = "$homeDirectory";
   hostname = "$host";
-  }
+}
 EOF
     echo "vars.nix generated for user '$username' on host '$host'."
   else
     warn "vars.nix already exists, skipping generation."
   fi
 
+}
+
+stage_changes() {
+  if [[ -n "$(git -C "$DOT_DIR" status --porcelain 2>/dev/null)" ]]; then
+    echo "Staging changes..."
+    git -C "$DOT_DIR" add '*.nix' 'flake.lock'
+  else
+    echo "No changes to stage."
+  fi
+}
+
+copy_configuration() {
   if [[ ! -f "$DOT_DIR/configuration.nix" ]]; then
     if [[ -d /etc/nixos && "$(ls -A /etc/nixos/ 2>/dev/null)" ]]; then
       echo "Copying NixOS configuration from /etc/nixos..."
-      cp -r /etc/nixos/* "$DOT_DIR"
+      cp -rn /etc/nixos/* "$DOT_DIR" 2>/dev/null || warn "Some files from /etc/nixos already exist in $DOT_DIR and were skipped."
+      stage_changes
     else
       die "/etc/nixos is empty or does not exist. Skipping configuration copy."
     fi
   fi
+}
 
-  if [[ -n "$(git -C "$DOT_DIR" status --porcelain 2>/dev/null)" ]]; then
-    echo "Staging changes..."
-    git -C "$DOT_DIR" add -A
-  else
-    echo "No changes to stage."
-  fi
-
-  mkdir -p "$HOME/Pictures/Screenshots"
-
-  # let's prompt first
+rebuild_nixos() {
   if prompt_yn "Rebuild NixOS configuration?"; then
     echo "Running sudo nixos-rebuild switch..."
     sudo nixos-rebuild switch --flake "$DOT_DIR#$(hostname)"
   else
     echo "Skipping NixOS rebuild."
   fi
+}
+
+help() {
+  echo "Usage: $0 [options]"
+  echo "Options:"
+  echo "  --no-rebuild       Skip NixOS rebuild"
+  echo "  --no-vars          Skip vars generation"
+  echo "  --no-configuration Skip copying configuration from /etc/nixos"
+  echo "  --vars-only     Generate vars and exit"
+  echo "  --rebuild-only  Rebuild NixOS and exit"
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+    --no-rebuild)
+      NO_REBUILD=1
+      ;;
+    --no-vars)
+      NO_VARS=1
+      ;;
+    --no-configuration)
+      NO_CONFIGURATION=1
+      ;;
+    --help)
+      help
+      exit 0
+      ;;
+    --vars-only)
+      check_prerequisites
+      generate_vars
+      exit 0
+      ;;
+    --rebuild-only)
+      check_prerequisites
+      rebuild_nixos
+      exit 0
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+    esac
+    shift
+  done
+}
+
+main() {
+  NO_REBUILD=0
+  NO_VARS=0
+  NO_CONFIGURATION=0
+  parse_args "$@"
+  check_prerequisites
+
+  if [[ "$NO_VARS" -eq 0 ]]; then
+    generate_vars
+  fi
+  if [[ "$NO_CONFIGURATION" -eq 0 ]]; then
+    copy_configuration
+  fi
+
+  mkdir -p "$HOME/Pictures/Screenshots"
+  touch ~/.zshrc
+
+  if [[ "$NO_REBUILD" -eq 0 ]]; then
+    rebuild_nixos
+  fi
 
   completion_info
 }
 
-main
+main "$@"

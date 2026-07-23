@@ -1,4 +1,16 @@
 { pkgs, vars, ... }:
+let
+  shellAliases = {
+    gst = "git status";
+    gcm = "git commit -m";
+    gp = "git push";
+    gfm = "git pull";
+    gia = "git add .";
+    gcb = "git checkout -b";
+    gcan = "git commit --amend --no-edit";
+    nrs = "sudo nixos-rebuild switch --flake .#";
+  };
+in
 {
   services.displayManager.cosmic-greeter.enable = true;
   programs.xwayland.enable = true;
@@ -32,11 +44,12 @@
 
   xdg.portal = {
     enable = true;
-    wlr.enable = true;
     extraPortals = [
+      pkgs.xdg-desktop-portal-wlr
       pkgs.xdg-desktop-portal-gtk
       pkgs.xdg-desktop-portal-gnome
     ];
+    wlr.enable = false;
     config = {
       common = {
         default = [ "gnome" ];
@@ -99,15 +112,17 @@
     shellInit = ''
       set -gx PATH "$HOME/.local/bin" "$PATH"
     '';
-    shellAliases = {
-      gst = "git status";
-      gcm = "git commit -m";
-      gp = "git push";
-      gfm = "git pull";
-      gia = "git add .";
-      gcb = "git checkout -b";
-      nrs = "sudo nixos-rebuild switch --flake .#";
-    };
+    inherit shellAliases;
+  };
+
+  programs.zsh = {
+    enable = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+    shellInit = ''
+      export PATH="$HOME/.local/bin:$PATH"
+    '';
+    inherit shellAliases;
   };
 
   programs.starship = {

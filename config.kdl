@@ -63,82 +63,11 @@ layer-rule {
     place-within-backdrop true
 }
 
-window-rule {
-    match is-active=false
-    opacity 0.97
-    background-effect {
-        blur true
-    }
-}
-
-window-rule {
-    match app-id=r#"org.quickshell$"#
-    open-floating true
-}
-
-window-rule {
-    match app-id="^(code)$"
-    default-column-width { proportion 0.6667; }
-}
-
-window-rule {
-    match app-id="^(app.zen_browser.zen)$"
-    background-effect {
-        blur true
-    }
-}
-
-window-rule {
-    match app-id="org.telegram.desktop"
-    default-column-width { proportion 0.20; }
-}
-
-window-rule {
-    match app-id="^(kitty.*)$"
-    default-column-width { proportion 0.333; }
-    background-effect {
-        blur true
-    }
-}
-
-window-rule {
-    match app-id="^(dev.zed.Zed)$"
-    default-column-width { proportion 0.6667; }
-    background-effect {
-        blur true
-    }
-}
-
-window-rule {
-    match app-id="scratch-terminal"
-    open-floating true
-    open-maximized false
-    open-fullscreen false
-    default-column-width { proportion 0.35; }
-    default-window-height { proportion 0.20;}
-}
-
-// Example: block out two password managers from screen capture.
-// (This example rule is commented out with a "/-" in front.)
-/-window-rule {
-    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
-    match app-id=r#"^org\.gnome\.World\.Secrets$"#
-
-    block-out-from "screen-capture"
-    block-out-from "screencast"
-}
-
-window-rule {
-    geometry-corner-radius 20
-    clip-to-geometry true
-}
-
 binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     Mod+Return hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty"; }
     Mod+D hotkey-overlay-title="Run an Application: dms" { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: dms" { spawn "dms" "ipc" "call" "lock" "lock"; }
 
     Mod+O repeat=false { toggle-overview; }
     Mod+Q repeat=false { close-window; }
@@ -283,10 +212,18 @@ binds {
     }
 
     XF86MonBrightnessUp allow-when-locked=true {
-       spawn "dms" "ipc" "call" "brightness" "increment" "5" "";
+       spawn "dms" "ipc" "call" "brightness" "increment" "5";
     }
     XF86MonBrightnessDown allow-when-locked=true {
-       spawn "dms" "ipc" "call" "brightness" "decrement" "5" "";
+       spawn "dms" "ipc" "call" "brightness" "decrement" "5";
+    }
+}
+
+window-rule {
+    match is-active=false
+    opacity 0.97
+    background-effect {
+        blur true
     }
 }
 
@@ -309,6 +246,47 @@ window-rule {
     }
 }
 
+window-rule {
+    match app-id="^(code)$"
+    default-column-width { proportion 0.6667; }
+}
+
+window-rule {
+    match app-id="^(app.zen_browser.zen)$"
+    background-effect {
+        blur true
+    }
+}
+
+window-rule {
+    match app-id="org.telegram.desktop"
+    default-column-width { proportion 0.20; }
+}
+
+window-rule {
+    match app-id="scratch-terminal"
+    open-floating true
+    open-maximized false
+    open-fullscreen false
+    default-column-width { proportion 0.35; }
+    default-window-height { proportion 0.20;}
+}
+
+// Example: block out two password managers from screen capture.
+// (This example rule is commented out with a "/-" in front.)
+/-window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+
+    block-out-from "screen-capture"
+    block-out-from "screencast"
+}
+
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
 environment {
   XDG_CURRENT_DESKTOP "niri"
   QT_QPA_PLATFORM "wayland"
@@ -316,7 +294,6 @@ environment {
   QT_QPA_PLATFORMTHEME "gtk3"
   QT_QPA_PLATFORMTHEME_QT6 "gtk3"
   OZONE_PLATFORM "wayland"
-  ELECTRON_OZONE_PLATFORM_HINT "wayland"
 }
 
 spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets,ssh,pkcs11"
