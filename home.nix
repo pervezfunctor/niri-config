@@ -1,5 +1,4 @@
 {
-  inputs,
   vars,
   pkgs,
   ...
@@ -8,23 +7,6 @@
   home.username = vars.username;
   home.homeDirectory = vars.homeDirectory;
   home.stateVersion = "26.05";
-
-  imports = [ inputs.dms.homeModules.dank-material-shell ];
-
-  programs.dank-material-shell = {
-    enable = true;
-    systemd = {
-      enable = false;
-      restartIfChanged = true;
-    };
-  };
-
-  home.pointerCursor = {
-    enable = true;
-    package = pkgs.bibata-cursors;
-    name = "Bibata-Modern-Ice";
-    size = 24;
-  };
 
   home.packages = with pkgs; [
     bat

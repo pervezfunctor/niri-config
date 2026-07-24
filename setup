@@ -187,8 +187,13 @@ main() {
     copy_configuration
   fi
 
-  mkdir -p "$HOME/Pictures/Screenshots"
-  touch ~/.zshrc
+  mkdir -p ~/Pictures/Screenshots
+  mkdir -p ~/.config/niri/dms
+  touch ~/.zshrc include "dms/colors.kdl"
+  touch ~/.config/niri/dms/layout.kdl
+  touch ~/.config/niri/dms/cursor.kdl
+  touch ~/.config/niri/dms/alttab.kdl
+  touch ~/.config/niri/dms/binds.kdl
 
   if [[ "$NO_REBUILD" -eq 0 ]]; then
     rebuild_nixos

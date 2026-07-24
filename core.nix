@@ -144,12 +144,18 @@ in
     gcc
     gcr
     git
+    opencode
+    claude-code
+    codex
     gnumake
     libsecret
+    mesa-demos
+    vulkan-tools
     udiskie
     udisks2
     unzip
     wget
     wl-clipboard
+    xwayland-satellite
   ];
 }
