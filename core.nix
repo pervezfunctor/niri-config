@@ -1,4 +1,4 @@
-{ pkgs, vars, ... }:
+{ pkgs, vars, inputs, ... }:
 let
   shellAliases = {
     gst = "git status";
@@ -13,10 +13,11 @@ let
   };
 in
 {
-  # services.displayManager.cosmic-greeter.enable = true;
+  # services.displayManager.plasma-login-manager.enable = true;
   services.displayManager.dms-greeter = {
     enable = true;
-    compositor.name = "niri";  # Or "hyprland" or "sway"
+    compositor.name = "niri";
+    package = inputs.dms.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
 
   programs.xwayland.enable = true;
