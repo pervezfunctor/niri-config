@@ -9,6 +9,7 @@ let
     gcb = "git checkout -b";
     gcan = "git commit --amend --no-edit";
     nrs = "sudo nixos-rebuild switch --flake .#";
+    zed = "zeditor";
   };
 in
 {
