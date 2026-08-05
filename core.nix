@@ -12,7 +12,12 @@ let
   };
 in
 {
-  services.displayManager.cosmic-greeter.enable = true;
+  # services.displayManager.cosmic-greeter.enable = true;
+  services.displayManager.dms-greeter = {
+    enable = true;
+    compositor.name = "niri";  # Or "hyprland" or "sway"
+  };
+
   programs.xwayland.enable = true;
   hardware.enableRedistributableFirmware = true;
   nixpkgs.config.allowUnfree = true;
