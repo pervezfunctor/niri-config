@@ -188,8 +188,11 @@ main() {
   fi
 
   mkdir -p ~/Pictures/Screenshots
+
+  touch ~/.zshrc
+
   mkdir -p ~/.config/niri/dms
-  touch ~/.zshrc include "dms/colors.kdl"
+  touch ~/.config/niri/dms/colors.kdl
   touch ~/.config/niri/dms/layout.kdl
   touch ~/.config/niri/dms/cursor.kdl
   touch ~/.config/niri/dms/alttab.kdl
